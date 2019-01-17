@@ -31,7 +31,10 @@ namespace Bee.Toolchain.IOS
 
     internal class IOSAppToolchain : IOSToolchain
     {
-        public static ToolChain ToolChain_IOSAppArm64 { get; } = new IOSAppToolchain();
+        public static ToolChain GetIOSAppToolchain(bool useStatic)
+        {
+            return useStatic ? new IOSStaticLibsAppToolchain() : new IOSAppToolchain();
+        }
 
         public override NativeProgramFormat ExecutableFormat { get; }
 
@@ -97,12 +100,22 @@ namespace Bee.Toolchain.IOS
         }
     }
 
+    internal class IOSStaticLibsAppToolchain : IOSAppToolchain
+    {
+        public override NativeProgramFormat DynamicLibraryFormat { get; }
+
+        public IOSStaticLibsAppToolchain() : base()
+        {
+            DynamicLibraryFormat = StaticLibraryFormat;
+        }        
+    }
+
     internal sealed class IOSAppMainModuleFormat : NativeProgramFormat
     {
         public override string Extension { get; } = "";
 
         internal IOSAppMainModuleFormat(XcodeToolchain toolchain) : base(
-            new IOSAppMainModuleLinker(toolchain))
+            new IOSAppMainModuleLinker(toolchain).WithBundledStaticLibraryDependencies(true))
         {
         }
     }
@@ -287,7 +300,8 @@ namespace Bee.Toolchain.IOS
             {
                 // skipping all subdirectories
                 // TODO: subdirectories require special processing (see processing Data below)
-                if (r.Path.RelativeTo(Path).Depth == 0 && r.Path.FileName != "testconfig.json")
+                var depth = (r as DeployableFile)?.RelativeDeployPath?.Depth;
+                if ((!depth.HasValue || depth <= 1) && r.Path.FileName != "testconfig.json") // fix this condition somehow
                 {
                     var fileGuid = pbxProject.AddFile(r.Path.FileName, r.Path.FileName);
                     pbxProject.AddFileToBuild(target, fileGuid);

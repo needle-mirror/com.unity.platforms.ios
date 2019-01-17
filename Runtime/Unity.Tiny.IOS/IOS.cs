@@ -5,9 +5,11 @@ using System.Runtime.InteropServices;
 using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Platforms;
 
 namespace Unity.Tiny.iOS
 {
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
     public class iOSWindowSystem : WindowSystem
     {
         private static iOSWindowSystem sWindowSystem;
@@ -24,45 +26,33 @@ namespace Unity.Tiny.iOS
             }
         }
 
-        /*TODO how we can inform RunLoop about system events pause/resume/destroy?
-        private static Action<int> onPauseM;
-
-        [MonoPInvokeCallbackAttribute]
-        static void ManagedOnPauseCallback(int pause)
-        {
-            onPauseM(pause);
-        }
-
-        private static Action onDestroyM;
-
-        [MonoPInvokeCallbackAttribute]
-        static void ManagedOnDestroyCallback()
-        {
-            onDestroyM();
-        }
-
         internal class MonoPInvokeCallbackAttribute : Attribute
         {
         }
 
-        public override void InfiniteMainLoop(MainLoopDelegate m)
+        public delegate void OnPauseDelegate(int pause);
+
+        [MonoPInvokeCallbackAttribute]
+        static void ManagedOnPauseCallback(int pause)
         {
-            staticM = m;
-            IOSNativeCalls.set_animation_frame_callback(Marshal.GetFunctionPointerForDelegate((MainLoopDelegate)ManagedRAFCallback));
+            PlatformEvents.SendSuspendResumeEvent(sWindowSystem, new SuspendResumeEvent(pause != 0));
         }
 
-        public void SetOnPauseCallback(Action<int> m)
+        public void SetOnPauseCallback()
         {
-            onPauseM = m;
-            IOSNativeCalls.set_pause_callback(Marshal.GetFunctionPointerForDelegate((Action<int>)ManagedOnPauseCallback));
+            iOSNativeCalls.set_pause_callback(Marshal.GetFunctionPointerForDelegate((Action<int>)ManagedOnPauseCallback));
         }
 
-        public void SetOnDestroyCallback(Action m)
+        [MonoPInvokeCallbackAttribute]
+        static void ManagedOnDestroyCallback()
         {
-            onDestroyM = m;
-            IOSNativeCalls.set_destroy_callback(Marshal.GetFunctionPointerForDelegate((Action)ManagedOnDestroyCallback));
+            PlatformEvents.SendQuitEvent(sWindowSystem, new QuitEvent());
         }
-        */
+
+        public void SetOnDestroyCallback()
+        {
+            iOSNativeCalls.set_destroy_callback(Marshal.GetFunctionPointerForDelegate((Action)ManagedOnDestroyCallback));
+        }
 
         public override void DebugReadbackImage(out int w, out int h, out NativeArray<byte> pixels)
         {
@@ -93,6 +83,10 @@ namespace Unity.Tiny.iOS
                 World.QuitUpdate = true;
                 return;
             }
+
+            SetOnPauseCallback();
+            SetOnDestroyCallback();
+
             int winw = 0, winh = 0;
             iOSNativeCalls.getWindowSize(ref winw, ref winh);
             config.focused = true;

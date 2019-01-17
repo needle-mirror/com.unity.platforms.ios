@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		852D0F68223170A600096C4E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 852D0F67223170A600096C4E /* Assets.xcassets */; };
 		852D0F6E223170A600096C4E /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 852D0F6D223170A600096C4E /* main.mm */; };
+		8578EE4B2396AE1800867728 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8578EE4A2396AE1800867728 /* AVFoundation.framework */; };
+		8578EE4D2396AE1D00867728 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8578EE4C2396AE1D00867728 /* AudioToolbox.framework */; };
+		8578EE4F2396AF0300867728 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8578EE4E2396AF0300867728 /* OpenGLES.framework */; };
 		85CEC161238C137E00B49C9E /* LaunchScreen-iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 85CEC15C238C137E00B49C9E /* LaunchScreen-iPhone.xib */; };
 		85CEC162238C137E00B49C9E /* LaunchScreen-iPad.png in Resources */ = {isa = PBXBuildFile; fileRef = 85CEC15D238C137E00B49C9E /* LaunchScreen-iPad.png */; };
 		85CEC163238C137E00B49C9E /* LaunchScreen-iPhoneLandscape.png in Resources */ = {isa = PBXBuildFile; fileRef = 85CEC15E238C137E00B49C9E /* LaunchScreen-iPhoneLandscape.png */; };
@@ -41,6 +44,9 @@
 		852D0F57223170A400096C4E /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		852D0F67223170A600096C4E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		852D0F6D223170A600096C4E /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		8578EE4A2396AE1800867728 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		8578EE4C2396AE1D00867728 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		8578EE4E2396AF0300867728 /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		859133FB23268C7C00BB572D /* UnityTinyIOS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UnityTinyIOS.h; sourceTree = "<group>"; };
 		859133FC23268C7C00BB572D /* TinyViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TinyViewController.h; sourceTree = "<group>"; };
 		85CEC15C238C137E00B49C9E /* LaunchScreen-iPhone.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = "LaunchScreen-iPhone.xib"; sourceTree = "<group>"; };
@@ -54,7 +60,6 @@
 		85CEC16F238EB12A00B49C9E /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
 		85CEC171238EB1D800B49C9E /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		85CEC173238EB23C00B49C9E /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
-		85CEC175238EB27F00B49C9E /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 		85CEC177238EB30A00B49C9E /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		85DF36D3228E9013008E8083 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		85DF36D5228EA4B0008E8083 /* placeholder */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = placeholder; sourceTree = "<group>"; };
@@ -68,6 +73,9 @@
 				85CEC178238EB30A00B49C9E /* QuartzCore.framework in Frameworks */,
 				85CEC172238EB1D800B49C9E /* UIKit.framework in Frameworks */,
 				85CEC174238EB23C00B49C9E /* Metal.framework in Frameworks */,
+				8578EE4D2396AE1D00867728 /* AudioToolbox.framework in Frameworks */,
+				8578EE4B2396AE1800867728 /* AVFoundation.framework in Frameworks */,
+				8578EE4F2396AF0300867728 /* OpenGLES.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -117,6 +125,9 @@
 		852D0F742231717D00096C4E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				8578EE4E2396AF0300867728 /* OpenGLES.framework */,
+				8578EE4C2396AE1D00867728 /* AudioToolbox.framework */,
+				8578EE4A2396AE1800867728 /* AVFoundation.framework */,
 				85CEC177238EB30A00B49C9E /* QuartzCore.framework */,
 				85CEC173238EB23C00B49C9E /* Metal.framework */,
 				85CEC171238EB1D800B49C9E /* UIKit.framework */,
@@ -135,7 +146,6 @@
 				852D0F51223170A400096C4E /* Frameworks */,
 				852D0F52223170A400096C4E /* Resources */,
 				852D0FAE2232614100096C4E /* Embed Libraries */,
-				7D0143BAAB2C15ECFE2FE049 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -335,7 +345,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "$(SRCROOT)/Sources/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -361,7 +371,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "$(SRCROOT)/Sources/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

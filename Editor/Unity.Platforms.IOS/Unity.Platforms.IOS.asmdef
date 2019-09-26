@@ -1,0 +1,17 @@
+{
+    "name": "Unity.Platforms.IOS",
+    "references": [
+        "Unity.Platforms",
+        "Unity.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": []
+}

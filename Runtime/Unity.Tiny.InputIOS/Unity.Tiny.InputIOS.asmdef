@@ -1,0 +1,18 @@
+{
+    "name": "Unity.Tiny.InputIOS",
+    "references": [
+      "Unity.Entities",
+      "Unity.Mathematics",
+      "Unity.Tiny.Core",
+      "Unity.Tiny.Core2D",
+      "Unity.Collections",
+      "Unity.Tiny.IOS",
+      "Unity.Tiny.Input",
+      "Unity.Tiny.Debugging",
+      "Unity.Entities.CPlusPlus"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [ "IOS" ],
+    "allowUnsafeCode": true,
+    "defineConstraints": ["UNITY_DOTSPLAYER"]
+}

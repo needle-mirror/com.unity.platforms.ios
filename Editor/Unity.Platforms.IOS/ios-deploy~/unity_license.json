@@ -1,0 +1,11 @@
+{
+    "licenses": [
+        {
+            "name": "ios-deploy",
+            "provenance": "https://github.com/phonegap/ios-deploy",
+            "license": "GNU General Public License v3",
+            "has_binaries": true,
+            "source_made_available": true,
+        },
+    ],
+}

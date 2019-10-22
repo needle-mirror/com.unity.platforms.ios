@@ -5,8 +5,6 @@ using System.Runtime.InteropServices;
 using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using Unity.Tiny.Core;
-using Unity.Tiny.Core2D;
 
 namespace Unity.Tiny.IOS
 {
@@ -108,7 +106,7 @@ namespace Unity.Tiny.IOS
             IOSNativeCalls.getWindowSize(ref winw, ref winh);
             config.focused = true;
             config.visible = true;
-            config.orientation = winw >= winh ? DisplayOrientation.Horizontal : DisplayOrientation.Vertical;
+            config.orientation = winw >= winh ? ScreenOrientation.Horizontal : ScreenOrientation.Vertical;
             config.frameWidth = winw;
             config.frameHeight = winh;
             int sw = 0, sh = 0;
@@ -151,7 +149,7 @@ namespace Unity.Tiny.IOS
                 if (config.autoSizeToFrame)
                 {
                     Console.WriteLine("IOS Window update size.");
-                    config.orientation = winw >= winh ? DisplayOrientation.Horizontal : DisplayOrientation.Vertical;
+                    config.orientation = winw >= winh ? ScreenOrientation.Landscape : ScreenOrientation.Portrait;
                     config.width = winw;
                     config.height = winh;
                     config.frameWidth = winw;
@@ -160,7 +158,6 @@ namespace Unity.Tiny.IOS
                     IOSNativeCalls.getFramebufferSize(ref fbw, ref fbh);
                     config.framebufferWidth = fbw;
                     config.framebufferHeight = fbh;
-                    config.renderMode = RenderMode.BGFX;
                     env.SetConfigData(config);
                 }
                 else

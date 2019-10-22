@@ -7,11 +7,9 @@ namespace Unity.Platforms.IOS
 {
     public class IOSBuildTarget : BuildTarget
     {
-        public override bool HideInBuildTargetPopup => UnityEngine.Application.platform != UnityEngine.RuntimePlatform.OSXEditor;
-
         public override string GetDisplayName()
         {
-            return "IOS";
+            return "iOS";
         }
 
         public override string GetBeeTargetName()

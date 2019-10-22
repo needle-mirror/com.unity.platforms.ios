@@ -164,7 +164,7 @@ namespace Bee.Toolchain.IOS
                 return mainLibPath;
             }
 
-            var iosPlatformPath = BuildProgramConfigFile.AsmDefDescriptionFor("Unity.Platforms.IOS").Path.Parent;
+            var iosPlatformPath = AsmDefConfigFile.AsmDefDescriptionFor("Unity.Platforms.IOS").Path.Parent;
             var xcodeProjectPath = mainLibPath.Parent;
             var xcodeSrcPath = iosPlatformPath.Combine(TinyProjectName+"~");
             var xcodeprojPath = xcodeProjectPath.Combine($"{TinyProjectName}.xcodeproj");
@@ -175,7 +175,8 @@ namespace Bee.Toolchain.IOS
             // copy and patch pbxproj file
             var pbxPath = xcodeprojPath.Combine("project.pbxproj");
             var pbxTemplatePath = xcodeSrcPath.Combine($"{TinyProjectName}.xcodeproj", "project.pbxproj");
-            var result = SetupXCodeProject(pbxTemplatePath, mainLibPath.Parent.DirectoryExists("Data"));
+            var exportManifestPath = new NPath(m_gameName).Combine("export.manifest");
+            var result = SetupXCodeProject(pbxTemplatePath, exportManifestPath.FileExists());
             Backend.Current.AddWriteTextAction(pbxPath, result);
             Backend.Current.AddDependency(pbxPath, mainLibPath);
 

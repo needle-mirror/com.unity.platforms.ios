@@ -7,25 +7,11 @@ namespace Unity.Platforms.IOS
 {
     public class IOSBuildTarget : BuildTarget
     {
-        public override string GetDisplayName()
-        {
-            return "iOS";
-        }
-
-        public override string GetBeeTargetName()
-        {
-            return "ios";
-        }
-
-        public override string GetExecutableExtension()
-        {
-            return ".command";
-        }
-
-        public override string GetUnityPlatformName()
-        {
-            return nameof(UnityEditor.BuildTarget.iOS);
-        }
+        public override bool CanBuild => UnityEngine.Application.platform == UnityEngine.RuntimePlatform.OSXEditor;
+        public override string DisplayName => "iOS";
+        public override string BeeTargetName => "ios";
+        public override string ExecutableExtension => ".command";
+        public override string UnityPlatformName => nameof(UnityEditor.BuildTarget.iOS);
 
         public override bool Run(FileInfo buildTarget)
         {
@@ -44,7 +30,7 @@ namespace Unity.Platforms.IOS
 
         public override ShellProcessOutput RunTestMode(string exeName, string workingDirPath, int timeout)
         {
-            var args = new string[] { $"{workingDirPath}/{exeName}{GetExecutableExtension()}" };
+            var args = new string[] { $"{workingDirPath}/{exeName}{ExecutableExtension}" };
             var workingDir = new DirectoryInfo(workingDirPath);
 
             System.Threading.EventWaitHandle started =  new System.Threading.AutoResetEvent(false);

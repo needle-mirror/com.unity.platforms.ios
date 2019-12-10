@@ -7,10 +7,22 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		852D0F59223170A400096C4E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 852D0F58223170A400096C4E /* AppDelegate.m */; };
 		852D0F68223170A600096C4E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 852D0F67223170A600096C4E /* Assets.xcassets */; };
 		852D0F6E223170A600096C4E /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 852D0F6D223170A600096C4E /* main.mm */; };
-		859133FE23268C7C00BB572D /* TinyViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 859133FD23268C7C00BB572D /* TinyViewController.m */; };
+		8578EE4B2396AE1800867728 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8578EE4A2396AE1800867728 /* AVFoundation.framework */; };
+		8578EE4D2396AE1D00867728 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8578EE4C2396AE1D00867728 /* AudioToolbox.framework */; };
+		8578EE4F2396AF0300867728 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8578EE4E2396AF0300867728 /* OpenGLES.framework */; };
+		85CEC161238C137E00B49C9E /* LaunchScreen-iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 85CEC15C238C137E00B49C9E /* LaunchScreen-iPhone.xib */; };
+		85CEC162238C137E00B49C9E /* LaunchScreen-iPad.png in Resources */ = {isa = PBXBuildFile; fileRef = 85CEC15D238C137E00B49C9E /* LaunchScreen-iPad.png */; };
+		85CEC163238C137E00B49C9E /* LaunchScreen-iPhoneLandscape.png in Resources */ = {isa = PBXBuildFile; fileRef = 85CEC15E238C137E00B49C9E /* LaunchScreen-iPhoneLandscape.png */; };
+		85CEC164238C137E00B49C9E /* LaunchScreen-iPhonePortrait.png in Resources */ = {isa = PBXBuildFile; fileRef = 85CEC15F238C137E00B49C9E /* LaunchScreen-iPhonePortrait.png */; };
+		85CEC165238C137E00B49C9E /* LaunchScreen-iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 85CEC160238C137E00B49C9E /* LaunchScreen-iPad.xib */; };
+		85CEC16C238E78A700B49C9E /* iPhoneInputImpl.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85CEC16B238E78A700B49C9E /* iPhoneInputImpl.mm */; };
+		85CEC16E238EB0E200B49C9E /* TinyViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85CEC16D238EB0E200B49C9E /* TinyViewController.mm */; };
+		85CEC170238EB12A00B49C9E /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85CEC16F238EB12A00B49C9E /* AppDelegate.mm */; };
+		85CEC172238EB1D800B49C9E /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 85CEC171238EB1D800B49C9E /* UIKit.framework */; };
+		85CEC174238EB23C00B49C9E /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 85CEC173238EB23C00B49C9E /* Metal.framework */; };
+		85CEC178238EB30A00B49C9E /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 85CEC177238EB30A00B49C9E /* QuartzCore.framework */; };
 		85DF36D6228EA4B0008E8083 /* placeholder in Resources */ = {isa = PBXBuildFile; fileRef = 85DF36D5228EA4B0008E8083 /* placeholder */; };
 /* End PBXBuildFile section */
 
@@ -30,12 +42,25 @@
 /* Begin PBXFileReference section */
 		852D0F54223170A400096C4E /* Tiny-iPhone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Tiny-iPhone.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		852D0F57223170A400096C4E /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
-		852D0F58223170A400096C4E /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		852D0F67223170A600096C4E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		852D0F6D223170A600096C4E /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		8578EE4A2396AE1800867728 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		8578EE4C2396AE1D00867728 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		8578EE4E2396AF0300867728 /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		859133FB23268C7C00BB572D /* UnityTinyIOS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UnityTinyIOS.h; sourceTree = "<group>"; };
 		859133FC23268C7C00BB572D /* TinyViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TinyViewController.h; sourceTree = "<group>"; };
-		859133FD23268C7C00BB572D /* TinyViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TinyViewController.m; sourceTree = "<group>"; };
+		85CEC15C238C137E00B49C9E /* LaunchScreen-iPhone.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = "LaunchScreen-iPhone.xib"; sourceTree = "<group>"; };
+		85CEC15D238C137E00B49C9E /* LaunchScreen-iPad.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "LaunchScreen-iPad.png"; sourceTree = "<group>"; };
+		85CEC15E238C137E00B49C9E /* LaunchScreen-iPhoneLandscape.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "LaunchScreen-iPhoneLandscape.png"; sourceTree = "<group>"; };
+		85CEC15F238C137E00B49C9E /* LaunchScreen-iPhonePortrait.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "LaunchScreen-iPhonePortrait.png"; sourceTree = "<group>"; };
+		85CEC160238C137E00B49C9E /* LaunchScreen-iPad.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = "LaunchScreen-iPad.xib"; sourceTree = "<group>"; };
+		85CEC16A238E78A700B49C9E /* iPhoneInputImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iPhoneInputImpl.h; sourceTree = "<group>"; };
+		85CEC16B238E78A700B49C9E /* iPhoneInputImpl.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = iPhoneInputImpl.mm; sourceTree = "<group>"; };
+		85CEC16D238EB0E200B49C9E /* TinyViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = TinyViewController.mm; sourceTree = "<group>"; };
+		85CEC16F238EB12A00B49C9E /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
+		85CEC171238EB1D800B49C9E /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		85CEC173238EB23C00B49C9E /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		85CEC177238EB30A00B49C9E /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		85DF36D3228E9013008E8083 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		85DF36D5228EA4B0008E8083 /* placeholder */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = placeholder; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -45,6 +70,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				85CEC178238EB30A00B49C9E /* QuartzCore.framework in Frameworks */,
+				85CEC172238EB1D800B49C9E /* UIKit.framework in Frameworks */,
+				85CEC174238EB23C00B49C9E /* Metal.framework in Frameworks */,
+				8578EE4D2396AE1D00867728 /* AudioToolbox.framework in Frameworks */,
+				8578EE4B2396AE1800867728 /* AVFoundation.framework in Frameworks */,
+				8578EE4F2396AF0300867728 /* OpenGLES.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -54,6 +85,11 @@
 		852D0F4B223170A400096C4E = {
 			isa = PBXGroup;
 			children = (
+				85CEC15D238C137E00B49C9E /* LaunchScreen-iPad.png */,
+				85CEC160238C137E00B49C9E /* LaunchScreen-iPad.xib */,
+				85CEC15C238C137E00B49C9E /* LaunchScreen-iPhone.xib */,
+				85CEC15E238C137E00B49C9E /* LaunchScreen-iPhoneLandscape.png */,
+				85CEC15F238C137E00B49C9E /* LaunchScreen-iPhonePortrait.png */,
 				85DF36D5228EA4B0008E8083 /* placeholder */,
 				852D0F56223170A400096C4E /* Sources */,
 				852D0F55223170A400096C4E /* Products */,
@@ -72,12 +108,14 @@
 		852D0F56223170A400096C4E /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				85CEC16F238EB12A00B49C9E /* AppDelegate.mm */,
+				85CEC16D238EB0E200B49C9E /* TinyViewController.mm */,
+				85CEC16A238E78A700B49C9E /* iPhoneInputImpl.h */,
+				85CEC16B238E78A700B49C9E /* iPhoneInputImpl.mm */,
 				859133FC23268C7C00BB572D /* TinyViewController.h */,
-				859133FD23268C7C00BB572D /* TinyViewController.m */,
 				859133FB23268C7C00BB572D /* UnityTinyIOS.h */,
 				85DF36D3228E9013008E8083 /* Info.plist */,
 				852D0F57223170A400096C4E /* AppDelegate.h */,
-				852D0F58223170A400096C4E /* AppDelegate.m */,
 				852D0F67223170A600096C4E /* Assets.xcassets */,
 				852D0F6D223170A600096C4E /* main.mm */,
 			);
@@ -87,6 +125,12 @@
 		852D0F742231717D00096C4E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				8578EE4E2396AF0300867728 /* OpenGLES.framework */,
+				8578EE4C2396AE1D00867728 /* AudioToolbox.framework */,
+				8578EE4A2396AE1800867728 /* AVFoundation.framework */,
+				85CEC177238EB30A00B49C9E /* QuartzCore.framework */,
+				85CEC173238EB23C00B49C9E /* Metal.framework */,
+				85CEC171238EB1D800B49C9E /* UIKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -102,7 +146,6 @@
 				852D0F51223170A400096C4E /* Frameworks */,
 				852D0F52223170A400096C4E /* Resources */,
 				852D0FAE2232614100096C4E /* Embed Libraries */,
-				2A5C4B3AAC7B8EB70C650D15 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -150,8 +193,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				85CEC164238C137E00B49C9E /* LaunchScreen-iPhonePortrait.png in Resources */,
+				85CEC163238C137E00B49C9E /* LaunchScreen-iPhoneLandscape.png in Resources */,
 				852D0F68223170A600096C4E /* Assets.xcassets in Resources */,
+				85CEC162238C137E00B49C9E /* LaunchScreen-iPad.png in Resources */,
+				85CEC165238C137E00B49C9E /* LaunchScreen-iPad.xib in Resources */,
 				85DF36D6228EA4B0008E8083 /* placeholder in Resources */,
+				85CEC161238C137E00B49C9E /* LaunchScreen-iPhone.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -162,9 +210,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				85CEC16E238EB0E200B49C9E /* TinyViewController.mm in Sources */,
 				852D0F6E223170A600096C4E /* main.mm in Sources */,
-				852D0F59223170A400096C4E /* AppDelegate.m in Sources */,
-				859133FE23268C7C00BB572D /* TinyViewController.m in Sources */,
+				85CEC170238EB12A00B49C9E /* AppDelegate.mm in Sources */,
+				85CEC16C238E78A700B49C9E /* iPhoneInputImpl.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -296,7 +345,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "$(SRCROOT)/Sources/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -322,7 +371,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = "$(SRCROOT)/Sources/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

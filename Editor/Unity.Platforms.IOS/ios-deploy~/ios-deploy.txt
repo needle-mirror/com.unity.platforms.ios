@@ -1,2 +1,0 @@
-https://github.com/phonegap/ios-deploy
-9667eca85e824a97e50dc34c388bcdc393ed85f9

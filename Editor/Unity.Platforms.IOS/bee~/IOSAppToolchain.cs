@@ -19,58 +19,90 @@ using UnityEditor.iOS.Xcode.Custom.Extensions;
 
 namespace Bee.Toolchain.IOS
 {
+    internal class UserIOSSdkLocator : IOSSdkLocator
+    {
+        public UserIOSSdkLocator() : base(Architecture.Arm64) {}
+
+        public IOSSdk UserIOSSdk(NPath path)
+        {
+            return path != null ? DefaultSdkFromXcodeApp(path) : IOSSdk.LocatorArm64.FindSdkInDownloadsOrSystem(new Version(10, 1));
+        }
+    }
+
     internal class IOSAppToolchain : IOSToolchain
     {
-        public static ToolChain ToolChain_IOSAppArm64 { get; } = new IOSAppToolchain(IOSSdk.LocatorArm64.FindSdkInDownloadsOrSystem(new Version(10, 1)));
+        public static ToolChain ToolChain_IOSAppArm64 { get; } = new IOSAppToolchain();
 
         public override NativeProgramFormat ExecutableFormat { get; }
 
-        public NPath XcodeBuildPath { get; private set; }
+        public override NativeProgramFormat DynamicLibraryFormat { get; }
 
-        public IOSAppToolchain(IOSSdk sdk) : base(sdk)
+        private static NPath _XcodePath = null;
+
+        private static NPath XcodePath
+        {
+            get
+            {
+                if (_XcodePath == null)
+                {
+                    string error = "";
+
+                    try
+                    {
+                        if (HostPlatform.IsOSX)
+                        {
+                            var start = new ProcessStartInfo("xcode-select", "-p")
+                            {
+                                RedirectStandardOutput = true,
+                                RedirectStandardError = true,
+                                RedirectStandardInput = true,
+                                UseShellExecute = false,
+                            };
+                            string output = "";
+                            using (var process = Process.Start(start))
+                            {
+                                process.OutputDataReceived += (sender, e) => { output += e.Data; };
+                                process.ErrorDataReceived += (sender, e) => { error += e.Data; };
+                                process.BeginOutputReadLine();
+                                process.BeginErrorReadLine();
+                                process.WaitForExit(); //? doesn't work correctly if time interval is set
+                            }
+
+                            _XcodePath = error == "" ? output : "";
+                            if (_XcodePath != "" && _XcodePath.DirectoryExists())
+                            {
+                                _XcodePath = XcodePath.Parent.Parent;
+                            }
+                            else
+                            {
+                                throw new InvalidOperationException("Failed to find Xcode, xcode-select did not return a valid path");
+                            }
+                        }
+                    }
+                    catch (InvalidOperationException e)
+                    {
+                        Console.WriteLine(
+                            $"xcode-select did not return a valid path. Error message, if any, was: {error}. " +
+                            $"Often this can be fixed by making sure you have Xcode command line tools" +
+                            $" installed correctly, and then running `sudo xcode-select -r`");
+                        throw e;
+                    }
+                }
+
+                return _XcodePath;
+            }
+        }
+
+        public IOSAppToolchain() : base((new UserIOSSdkLocator()).UserIOSSdk(XcodePath))
         {
             ExecutableFormat = new IOSAppMainModuleFormat(this);
-
-            // getting path to xcodebuild
-            if (HostPlatform.IsOSX)
-            {
-                var start = new ProcessStartInfo("xcode-select", "-p")
-                {
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    RedirectStandardInput = true,
-                    UseShellExecute = false,
-                };
-                string output = "";
-                string error = "";
-                using (var process = Process.Start(start))
-                {
-                    process.OutputDataReceived += (sender, e) => { output += e.Data; };
-                    process.ErrorDataReceived += (sender, e) => { error += e.Data; };
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
-                    process.WaitForExit(); //? doesn't work correctly if time interval is set
-                }
-                XcodeBuildPath = error == "" ? output : "";
-                if (XcodeBuildPath != "" && XcodeBuildPath.DirectoryExists())
-                {
-                    XcodeBuildPath = XcodeBuildPath.Combine("usr", "bin", "xcodebuild");
-                }
-                else
-                {
-                    throw new Exception("Failed to find Xcode, xcode-select did not return a valid path");
-                }
-            }
-            else
-            {
-                XcodeBuildPath = "";
-            }
+            DynamicLibraryFormat = StaticLibraryFormat;
         }
     }
 
     internal sealed class IOSAppMainModuleFormat : NativeProgramFormat
     {
-        public override string Extension { get; } = "command";
+        public override string Extension { get; } = "";
 
         internal IOSAppMainModuleFormat(XcodeToolchain toolchain) : base(
             new IOSAppMainModuleLinker(toolchain))
@@ -129,7 +161,7 @@ namespace Bee.Toolchain.IOS
     }
 
     internal class IOSAppMainStaticLibrary : StaticLibrary, IPackagedAppExtension
-    {    
+    {
         private const string TinyProjectName = "Tiny-iPhone";
 
         private IOSAppToolchain m_iosAppToolchain;
@@ -137,7 +169,7 @@ namespace Bee.Toolchain.IOS
         private CodeGen m_codeGen;
         private IEnumerable<IDeployable> m_supportFiles;
 
-        public IOSAppMainStaticLibrary(NPath path, IOSAppToolchain toolchain, params PrecompiledLibrary[] libraryDependencies) : base(path, libraryDependencies) 
+        public IOSAppMainStaticLibrary(NPath path, IOSAppToolchain toolchain, params PrecompiledLibrary[] libraryDependencies) : base(path, libraryDependencies)
         {
             m_iosAppToolchain = toolchain;
         }
@@ -164,13 +196,10 @@ namespace Bee.Toolchain.IOS
                 return mainLibPath;
             }
 
-            var iosPlatformPath = AsmDefConfigFile.AsmDefDescriptionFor("Unity.Platforms.IOS").Path.Parent;
+            var iosPlatformPath = AsmDefConfigFile.AsmDefDescriptionFor("Unity.Platforms.iOS").Path.Parent;
             var xcodeProjectPath = mainLibPath.Parent;
             var xcodeSrcPath = iosPlatformPath.Combine(TinyProjectName+"~");
             var xcodeprojPath = xcodeProjectPath.Combine($"{TinyProjectName}.xcodeproj");
-            var appFolderPath = buildPath.Combine("app");
-            var configuration = m_codeGen == CodeGen.Release ? "Release" : "Debug";
-            var appPath = appFolderPath.Combine("Build", "Products", $"{configuration}-iphoneos", $"{TinyProjectName}.app");
 
             // copy and patch pbxproj file
             var pbxPath = xcodeprojPath.Combine("project.pbxproj");
@@ -198,33 +227,28 @@ namespace Bee.Toolchain.IOS
                 }
             }
 
-            var xcodeBuildExecutableString = $"{m_iosAppToolchain.XcodeBuildPath.InQuotes()} -project {xcodeprojPath.InQuotes()} -configuration {configuration} -derivedDataPath {appFolderPath.InQuotes()} -destination \"generic/platform=iOS\" -scheme \"{TinyProjectName}\" -allowProvisioningUpdates";
-            Backend.Current.AddAction(
-                actionName: "Build Xcode project",
-                targetFiles: new[] { appPath },
-                inputs: new[] { pbxPath },
-                executableStringFor: xcodeBuildExecutableString,
-                commandLineArguments: Array.Empty<string>(),
-                allowUnexpectedOutput: true
-            );
-
-            // write command file to launch
-            var cmdPath = buildPath.Combine(m_gameName).ChangeExtension("command");
-            var iosDeployPath = iosPlatformPath.Combine("ios-deploy~/ios-deploy");
-            var runCmd = "#!/bin/bash\n" + $"{iosDeployPath} -b {appPath.MakeAbsolute()} -r -d -I -W";
-            Backend.Current.AddWriteTextAction(cmdPath, runCmd);
-            Backend.Current.AddDependency(cmdPath, appPath);
-
             foreach (var r in m_supportFiles)
             {
                 if (r.Path.FileName == "testconfig.json")
                 {
-                    Backend.Current.AddDependency(cmdPath, CopyTool.Instance().Setup(buildPath.Combine(r.Path.FileName), r.Path));
+                    Backend.Current.AddDependency(pbxPath, CopyTool.Instance().Setup(buildPath.Combine(r.Path.FileName), r.Path));
                     break;
                 }
             }
 
-           return cmdPath;
+            // TODO probably it is required to keep previous project since it can be modified by user
+            var outputPath = buildPath.Combine($"{m_gameName}");
+            Console.WriteLine($"Move project to {outputPath}");
+            Backend.Current.AddAction(
+                actionName: "Open XCode project folder",
+                targetFiles: new[] { outputPath },
+                inputs: new[] { pbxPath },
+                executableStringFor: $"rm -rf {outputPath} && mv {xcodeProjectPath} {outputPath} && open {outputPath}",
+                commandLineArguments: Array.Empty<string>(),
+                allowUnexpectedOutput: true
+            );
+
+            return outputPath;
         }
 
         private void ProcessLibs(BuiltNativeProgram p, HashSet<NPath> xCodeLibs)
@@ -279,19 +303,21 @@ namespace Bee.Toolchain.IOS
                 pbxProject.AddFileToBuild(target, fileGuid);
             }
 
+            pbxProject.SetBuildProperty(targets, "PRODUCT_BUNDLE_IDENTIFIER", $"com.unity.{m_gameName.ToLower()}");
+            pbxProject.SetBuildProperty(targets, "CODE_SIGN_STYLE", "Automatic");
+            pbxProject.SetBuildProperty(targets, "PROVISIONING_PROFILE", "");
+
+            /* TODO pass signing config from build settings or from env vars
             string appleDeveloperTeamID = null;
             string manualProvisioningProfileName = null;
             string manualProvisioningProfileUUID = null;
             string codeSignIdentity = null;
-
-            //TODO pass signing config from build settings
 
             appleDeveloperTeamID = Environment.GetEnvironmentVariable("TEAM_ID");
             manualProvisioningProfileName = Environment.GetEnvironmentVariable("UNITY_IOSPROVISIONINGNAME");
             manualProvisioningProfileUUID = Environment.GetEnvironmentVariable("UNITY_IOSPROVISIONINGUUID");
             codeSignIdentity = Environment.GetEnvironmentVariable("UNITY_APPLECERTIFICATENAME");
 
-            pbxProject.SetBuildProperty(targets, "PRODUCT_BUNDLE_IDENTIFIER", $"com.unity.{m_gameName.ToLower()}");
             if (!string.IsNullOrEmpty(appleDeveloperTeamID))
             {
                 pbxProject.SetBuildProperty(targets, "DEVELOPMENT_TEAM", appleDeveloperTeamID);
@@ -307,6 +333,7 @@ namespace Bee.Toolchain.IOS
                 pbxProject.SetBuildProperty(targets, "PROVISIONING_PROFILE", !string.IsNullOrEmpty(manualProvisioningProfileUUID) ? manualProvisioningProfileUUID : manualProvisioningProfileName);
                 pbxProject.SetBuildProperty(targets, "CODE_SIGN_IDENTITY[sdk=iphoneos*]", codeSignIdentity == null ? "iPhone Developer" : codeSignIdentity);
             }
+            */
             return pbxProject.WriteToString();
         }
 

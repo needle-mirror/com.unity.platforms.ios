@@ -1,5 +1,5 @@
 {
-    "name": "Unity.Platforms.IOS",
+    "name": "Unity.Platforms.iOS",
     "references": [
         "Unity.Platforms",
         "Unity.Editor"
@@ -13,5 +13,6 @@
     "precompiledReferences": [],
     "autoReferenced": false,
     "defineConstraints": [],
-    "versionDefines": []
+    "versionDefines": [],
+    "noEngineReferences": false
 }

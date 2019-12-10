@@ -1,11 +1,11 @@
 ﻿using NUnit.Framework;
-using Unity.Platforms.IOS;
+using Unity.Platforms.iOS;
 
 class BasicTests
 {
 	[Test]
-	public void VerifyCanReferenceIOSBuildTarget()
+	public void VerifyCanReferenceiOSBuildTarget()
 	{
-		Assert.IsNotNull(typeof(IOSBuildTarget));
+		Assert.IsNotNull(typeof(iOSBuildTarget));
 	}
 }

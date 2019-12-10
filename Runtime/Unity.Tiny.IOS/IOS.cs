@@ -6,12 +6,12 @@ using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace Unity.Tiny.IOS
+namespace Unity.Tiny.iOS
 {
-    public class IOSWindowSystem : WindowSystem
+    public class iOSWindowSystem : WindowSystem
     {
-        private static IOSWindowSystem sWindowSystem;
-        public IOSWindowSystem()
+        private static iOSWindowSystem sWindowSystem;
+        public iOSWindowSystem()
         {
             initialized = false;
             sWindowSystem = this;
@@ -20,7 +20,7 @@ namespace Unity.Tiny.IOS
         public override IntPtr GetPlatformWindowHandle()
         {
             unsafe {
-                return (IntPtr)IOSNativeCalls.getNativeWindow();
+                return (IntPtr)iOSNativeCalls.getNativeWindow();
             }
         }
 
@@ -66,16 +66,7 @@ namespace Unity.Tiny.IOS
 
         public override void DebugReadbackImage(out int w, out int h, out NativeArray<byte> pixels)
         {
-            var env = World.GetExistingSystem<TinyEnvironment>();
-            var config = env.GetConfigData<DisplayInfo>();
-            pixels = new NativeArray<byte>(config.framebufferWidth*config.framebufferHeight*4, Allocator.Persistent);
-            unsafe
-            {
-                IOSNativeCalls.debugReadback(config.framebufferWidth, config.framebufferHeight, pixels.GetUnsafePtr());
-            }
-
-            w = config.framebufferWidth;
-            h = config.framebufferHeight;
+            throw new InvalidOperationException("Can no longer read-back from window use BGFX instead.");
         }
 
         protected override void OnStartRunning()
@@ -90,7 +81,7 @@ namespace Unity.Tiny.IOS
 
             try
             {
-                initialized = IOSNativeCalls.init();
+                initialized = iOSNativeCalls.init();
             } catch
             {
                 Console.WriteLine("  Exception during initialization.");
@@ -103,25 +94,25 @@ namespace Unity.Tiny.IOS
                 return;
             }
             int winw = 0, winh = 0;
-            IOSNativeCalls.getWindowSize(ref winw, ref winh);
+            iOSNativeCalls.getWindowSize(ref winw, ref winh);
             config.focused = true;
             config.visible = true;
-            config.orientation = winw >= winh ? ScreenOrientation.Horizontal : ScreenOrientation.Vertical;
+            config.orientation = winw >= winh ? ScreenOrientation.Landscape : ScreenOrientation.Portrait;
             config.frameWidth = winw;
             config.frameHeight = winh;
             int sw = 0, sh = 0;
-            IOSNativeCalls.getScreenSize(ref sw, ref sh);
+            iOSNativeCalls.getScreenSize(ref sw, ref sh);
             config.screenWidth = sw;
             config.screenHeight = sh;
             config.width = winw;
             config.height = winh;
             int fbw = 0, fbh = 0;
-            IOSNativeCalls.getFramebufferSize(ref fbw, ref fbh);
+            iOSNativeCalls.getFramebufferSize(ref fbw, ref fbh);
             config.framebufferWidth = fbw;
             config.framebufferHeight = fbh;
             env.SetConfigData(config);
 
-            frameTime = IOSNativeCalls.time();
+            frameTime = iOSNativeCalls.time();
         }
 
         protected override void OnDestroy()
@@ -130,7 +121,7 @@ namespace Unity.Tiny.IOS
             if (initialized)
             {
                 Console.WriteLine("iOS Window shutdown.");
-                IOSNativeCalls.shutdown(0);
+                iOSNativeCalls.shutdown(0);
                 initialized = false;
             }
         }
@@ -143,7 +134,7 @@ namespace Unity.Tiny.IOS
             var env = World.GetExistingSystem<TinyEnvironment>();
             var config = env.GetConfigData<DisplayInfo>();
             int winw = 0, winh = 0;
-            IOSNativeCalls.getWindowSize(ref winw, ref winh);
+            iOSNativeCalls.getWindowSize(ref winw, ref winh);
             if (winw != config.width || winh != config.height)
             {
                 if (config.autoSizeToFrame)
@@ -155,28 +146,25 @@ namespace Unity.Tiny.IOS
                     config.frameWidth = winw;
                     config.frameHeight = winh;
                     int fbw = 0, fbh = 0;
-                    IOSNativeCalls.getFramebufferSize(ref fbw, ref fbh);
+                    iOSNativeCalls.getFramebufferSize(ref fbw, ref fbh);
                     config.framebufferWidth = fbw;
                     config.framebufferHeight = fbh;
                     env.SetConfigData(config);
                 }
                 else
                 {
-                    IOSNativeCalls.resize(config.width, config.height);
+                    iOSNativeCalls.resize(config.width, config.height);
                 }
             }
-            if (!IOSNativeCalls.messagePump())
+            if (!iOSNativeCalls.messagePump())
             {
                 Console.WriteLine("iOS message pump exit.");
-                IOSNativeCalls.shutdown(1);
+                iOSNativeCalls.shutdown(1);
                 World.QuitUpdate = true;
                 initialized = false;
                 return;
             }
-#if DEBUG
-            IOSNativeCalls.debugClear();
-#endif
-            double newFrameTime = IOSNativeCalls.time();
+            double newFrameTime = iOSNativeCalls.time();
             var timeData = env.StepWallRealtimeFrame(newFrameTime - frameTime);
             World.SetTime(timeData);
             frameTime = newFrameTime;
@@ -186,59 +174,50 @@ namespace Unity.Tiny.IOS
         private double frameTime;
     }
 
-    public static class IOSNativeCalls
+    public static class iOSNativeCalls
     {
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "init_ios")]
+        [DllImport("__Internal", EntryPoint = "init_ios")]
         [return: MarshalAs(UnmanagedType.I1)]
         public static extern bool init();
 
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "getWindowSize_ios")]
+        [DllImport("__Internal", EntryPoint = "getWindowSize_ios")]
         public static extern void getWindowSize(ref int w, ref int h);
 
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "getScreenSize_ios")]
+        [DllImport("__Internal", EntryPoint = "getScreenSize_ios")]
         public static extern void getScreenSize(ref int w, ref int h);
 
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "getFramebufferSize_ios")]
+        [DllImport("__Internal", EntryPoint = "getFramebufferSize_ios")]
         public static extern void getFramebufferSize(ref int w, ref int h);
 
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "getWindowFrameSize_ios")]
+        [DllImport("__Internal", EntryPoint = "getWindowFrameSize_ios")]
         public static extern void getWindowFrameSize(ref int left, ref int top, ref int right, ref int bottom);
 
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "shutdown_ios")]
+        [DllImport("__Internal", EntryPoint = "shutdown_ios")]
         public static extern void shutdown(int exitCode);
 
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "resize_ios")]
+        [DllImport("__Internal", EntryPoint = "resize_ios")]
         public static extern void resize(int width, int height);
 
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "messagePump_ios")]
+        [DllImport("__Internal", EntryPoint = "messagePump_ios")]
         [return: MarshalAs(UnmanagedType.I1)]
         public static extern bool messagePump();
 
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "swapBuffers_ios")]
-        public static extern void swapBuffers();
-
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "debugClear_ios")]
-        public static extern void debugClear();
-
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "debugReadback_ios")]
-        public static unsafe extern void debugReadback(int w, int h, void *pixels);
-
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "time_ios")]
+        [DllImport("__Internal", EntryPoint = "time_ios")]
         public static extern double time();
 
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "pausecallbacksinit_ios")]
+        [DllImport("__Internal", EntryPoint = "pausecallbacksinit_ios")]
         public static extern bool set_pause_callback(IntPtr func);
 
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "destroycallbacksinit_ios")]
+        [DllImport("__Internal", EntryPoint = "destroycallbacksinit_ios")]
         public static extern bool set_destroy_callback(IntPtr func);
 
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "get_touch_info_stream_ios")]
+        [DllImport("__Internal", EntryPoint = "get_touch_info_stream_ios")]
         public static extern unsafe int * getTouchInfoStream(ref int len);
 
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "get_native_window_ios")]
+        [DllImport("__Internal", EntryPoint = "get_native_window_ios")]
         public static extern unsafe void * getNativeWindow();
 
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "reset_ios_input")]
+        [DllImport("__Internal", EntryPoint = "reset_ios_input")]
         public static extern void resetStreams();
     }
 

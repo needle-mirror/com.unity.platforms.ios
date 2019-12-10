@@ -1,9 +1,9 @@
 using JetBrains.Annotations;
 
 [UsedImplicitly]
-class CustomizerForInputIOS : AsmDefCSharpProgramCustomizer
+class CustomizerForInputiOS : AsmDefCSharpProgramCustomizer
 {
-    public override string CustomizerFor => "Unity.Tiny.InputIOS";
+    public override string CustomizerFor => "Unity.Tiny.InputiOS";
 
     public override string[] ImplementationFor => new [] { "Unity.Tiny.Input" };
 }

@@ -1,9 +1,12 @@
 {
-    "name": "Unity.Tiny.iOS",
+    "name": "Unity.Tiny.InputiOS",
     "references": [
         "Unity.Entities",
         "Unity.Mathematics",
-        "Unity.Tiny.Core"
+        "Unity.Tiny.Core",
+        "Unity.Collections",
+        "Unity.Tiny.iOS",
+        "Unity.Tiny.Input"
     ],
     "includePlatforms": [
         "iOS"

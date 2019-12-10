@@ -1,13 +1,11 @@
 #include <Unity/Runtime.h>
 
 #include <dlfcn.h>
-#include <unistd.h> 
+#include <unistd.h>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
 #include <vector>
-#include <OpenGLES/ES3/gl.h>
-#include <OpenGLES/ES3/glext.h>
 
 static bool shouldClose = false;
 static int windowW = 0;
@@ -22,7 +20,7 @@ static void (*destroyf)() = 0;
 
 DOTS_EXPORT(bool)
 init_ios() {
-    printf("IOSWrapper: IOS C Init\n");
+    printf("IOSWrapper: iOS C Init\n");
     return true;
 }
 
@@ -73,14 +71,6 @@ messagePump_ios() {
     return !shouldClose;
 }
 
-DOTS_EXPORT(void)
-swapBuffers_ios() {
-    /*if (!mainWindow || shouldClose)
-        return;
-    glfwMakeContextCurrent(mainWindow);
-    glfwSwapBuffers(mainWindow);*/
-}
-
 DOTS_EXPORT(double)
 time_ios() {
     static double start_time = -1;
@@ -91,10 +81,6 @@ time_ios() {
         start_time = t;
     }
     return t - start_time;
-}
-
-DOTS_EXPORT(void)
-debugClear_ios() {
 }
 
 DOTS_EXPORT(bool)
@@ -136,15 +122,6 @@ DOTS_EXPORT(void)
 reset_ios_input()
 {
     touch_info_stream.clear();
-}
-
-DOTS_EXPORT(void)
-debugReadback(int w, int h, void *pixels)
-{
-    if (w>windowW || h>windowH)
-        return;
-    //glfwMakeContextCurrent(mainWindow);
-    glReadPixels(0,0,w,h,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
 }
 
 DOTS_EXPORT(void)

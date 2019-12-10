@@ -1,5 +1,6 @@
 #import "TinyViewController.h"
 #import "UnityTinyIOS.h"
+#import "iPhoneInputImpl.h"
 #import <QuartzCore/CAEAGLLayer.h>
 
 #if __IPHONE_8_0 && !TARGET_IPHONE_SIMULATOR
@@ -27,7 +28,9 @@ static void* m_nwh = NULL;
         m_device = MTLCreateSystemDefaultDevice(); // is metal supported on this device (is there a better way to do this - without creating device ?)
         if (m_device)
         {
-            return metalClass;
+            // TODO: get rid of OpenGLES for iOS when problem with Metal on A7/A8 based devices is fixed   
+            if ([m_device supportsFeatureSet:MTLFeatureSet_iOS_GPUFamily3_v1])
+                return metalClass;
         }
     }
 #endif
@@ -59,6 +62,7 @@ static void* m_nwh = NULL;
     {
         m_displayLink = [self.window.screen displayLinkWithTarget:self selector:@selector(renderFrame)];
         [m_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes]; // or NSDefaultRunLoopMode ?
+        InputInit(self);
     }
 }
 
@@ -68,11 +72,13 @@ static void* m_nwh = NULL;
     {
         [m_displayLink invalidate];
         m_displayLink = nil;
+        InputShutdown();
     }
 }
 
 - (void)renderFrame
 {
+    InputProcess();
     step();
 }
 @end
@@ -113,31 +119,22 @@ static void* m_nwh = NULL;
 // very simple implementation, no multi-touch for now
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    touchevent(0, 0, [self touchX:touches.anyObject], [self touchY:touches.anyObject]);
+    ProcessTouchEvents(self.view, touches, [event allTouches]);
 }
 
 - (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    touchevent(0, 2, [self touchX:touches.anyObject], [self touchY:touches.anyObject]);
+    ProcessTouchEvents(self.view, touches, [event allTouches]);
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    touchevent(0, 1, [self touchX:touches.anyObject], [self touchY:touches.anyObject]);
+    ProcessTouchEvents(self.view, touches, [event allTouches]);
 }
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
-    touchevent(0, 3, [self touchX:touches.anyObject], [self touchY:touches.anyObject]);
-}
-
-- (int)touchX:(UITouch*)touch
-{
-    return (int)([touch locationInView:self.view].x * [[UIScreen mainScreen] scale]);
-}
-- (int)touchY:(UITouch*)touch
-{
-    return (int)([touch locationInView:self.view].y * [[UIScreen mainScreen] scale]);
+    ProcessTouchEvents(self.view, touches, [event allTouches]);
 }
 
 @end

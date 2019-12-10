@@ -1,8 +1,8 @@
 using Unity.Tiny.Input;
 
-namespace Unity.Tiny.IOS
+namespace Unity.Tiny.iOS
 {
-    public class IOSInputSystem : InputSystem
+    public class iOSInputSystem : InputSystem
     {
         protected override void OnStartRunning()
         {
@@ -21,7 +21,7 @@ namespace Unity.Tiny.IOS
             {
                 // touch
                 int touchInfoStreamLen = 0;
-                int* touchInfoStream = IOSNativeCalls.getTouchInfoStream(ref touchInfoStreamLen);
+                int* touchInfoStream = iOSNativeCalls.getTouchInfoStream(ref touchInfoStreamLen);
                 for (int i = 0; i < touchInfoStreamLen; i += 4)
                 {
                     if (touchInfoStream[i + 1] == 0) //ACTION_DOWN
@@ -38,7 +38,7 @@ namespace Unity.Tiny.IOS
                     m_inputState.hasTouch = true;
             }
 
-            IOSNativeCalls.resetStreams();
+            iOSNativeCalls.resetStreams();
         }
 
     }

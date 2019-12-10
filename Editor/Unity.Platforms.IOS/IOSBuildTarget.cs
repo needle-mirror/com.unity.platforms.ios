@@ -3,94 +3,29 @@ using System.IO;
 using System.Text;
 using System.Diagnostics;
 
-namespace Unity.Platforms.IOS
+namespace Unity.Platforms.iOS
 {
-    public class IOSBuildTarget : BuildTarget
+    public class iOSBuildTarget : BuildTarget
     {
         public override bool CanBuild => UnityEngine.Application.platform == UnityEngine.RuntimePlatform.OSXEditor;
         public override string DisplayName => "iOS";
         public override string BeeTargetName => "ios";
-        public override string ExecutableExtension => ".command";
+        public override string ExecutableExtension => "";
         public override string UnityPlatformName => nameof(UnityEditor.BuildTarget.iOS);
 
         public override bool Run(FileInfo buildTarget)
         {
-            var buildDir = buildTarget.Directory.FullName;
-            var result = Shell.RunAsync(new ShellProcessArgs()
-            {
-                ThrowOnError = false,
-                Executable = "sh", 
-                Arguments = new string[] { buildTarget.FullName },
-                WorkingDirectory = new DirectoryInfo(buildDir),
-                OutputDataReceived = (object sender, DataReceivedEventArgs args) => { if (args.Data != null) UnityEngine.Debug.Log(args.Data); },
-                ErrorDataReceived = (object sender, DataReceivedEventArgs args) => {  if (args.Data != null) UnityEngine.Debug.LogError(args.Data); }
-            });
+			UnityEditor.EditorUtility.RevealInFinder(buildTarget.FullName);
             return true;
-        }
+		}
 
         public override ShellProcessOutput RunTestMode(string exeName, string workingDirPath, int timeout)
         {
-            var args = new string[] { $"{workingDirPath}/{exeName}{ExecutableExtension}" };
-            var workingDir = new DirectoryInfo(workingDirPath);
-
-            System.Threading.EventWaitHandle started =  new System.Threading.AutoResetEvent(false);
-            var logOutput = new StringBuilder();
-            DataReceivedEventHandler outputReceived = (object sender, DataReceivedEventArgs e) =>
-            {
-                if (e.Data != null)
-                {
-                    logOutput.AppendLine(e.Data);
-                    if (e.Data.Contains("(lldb)") && e.Data.Contains("run"))
-                    {
-                        started.Set();
-                    }
-                }
-            };
-
-            DataReceivedEventHandler errorReceived = (object sender, DataReceivedEventArgs e) =>
-            {
-                if (e.Data != null)
-                {
-                    logOutput.AppendLine(e.Data);
-                }
-            };
-
-            var shellArgs = new ShellProcessArgs
-            {
-                Executable = "sh", 
-                Arguments = args,
-                WorkingDirectory = workingDir,
-                ThrowOnError = false,
-                OutputDataReceived = outputReceived,
-                ErrorDataReceived = errorReceived
-            };
-
-
-            Shell.RunAsync(shellArgs);
-
-            // waiting for process to start on the device
-            started.WaitOne();
-
-            // Killing on timeout
-            // TODO auto exit for non-samples tests
-            System.Threading.Thread.Sleep((timeout == 0 ? 2000 : timeout) + 3000); // starting on iOS is slow
-
-            // killing ios-deploy to kill running app on device
-            Shell.Run(new ShellProcessArgs()
-            {
-                Executable = "pkill", 
-                Arguments = new string[] { "ios-deploy" },
-                WorkingDirectory = workingDir,
-                ThrowOnError = false
-            });
-
-            var fullOutput = logOutput.ToString();
             return new ShellProcessOutput
             {
-                // timeout == 0 is for non-sample test, TODO invent something better
-                Succeeded = timeout == 0 ? fullOutput.Contains("Test suite: SUCCESS") : true,
+                Succeeded = false,
                 ExitCode = 0,
-                FullOutput = fullOutput
+                FullOutput = "Test mode is not supported for iOS yet"
             };
         }
     }

@@ -10,7 +10,7 @@ class DotsIOSTarget : DotsBuildSystemTarget
         return new IOSAppMainModuleFormat(ToolChain as IOSAppToolchain);
     }
 
-    protected override string Identifier => "ios";
+    public override string Identifier => "ios";
 
-    protected override ToolChain ToolChain => IOSAppToolchain.ToolChain_IOSAppArm64;
+    public override ToolChain ToolChain => IOSAppToolchain.ToolChain_IOSAppArm64;
 }

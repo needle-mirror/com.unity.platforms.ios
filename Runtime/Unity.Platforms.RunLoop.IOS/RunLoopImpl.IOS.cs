@@ -23,14 +23,14 @@ namespace Unity.Platforms
         {
             staticManagedDelegate = (RunLoop.RunLoopDelegate)ManagedRAFCallback;
             staticM = runLoopDelegate;
-            IOSNativeCalls.set_animation_frame_callback(Marshal.GetFunctionPointerForDelegate(staticManagedDelegate));
+            iOSNativeCalls.set_animation_frame_callback(Marshal.GetFunctionPointerForDelegate(staticManagedDelegate));
         }
     }
 
-    static class IOSNativeCalls
+    static class iOSNativeCalls
     {
         // calls to IOSWrapper.cpp
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "rafcallbackinit_ios")]
+        [DllImport("__Internal", EntryPoint = "rafcallbackinit_ios")]
         [return: MarshalAs(UnmanagedType.I1)]
         public static extern bool set_animation_frame_callback(IntPtr func);
     }

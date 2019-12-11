@@ -176,48 +176,48 @@ namespace Unity.Tiny.iOS
 
     public static class iOSNativeCalls
     {
-        [DllImport("__Internal", EntryPoint = "init_ios")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "init_ios")]
         [return: MarshalAs(UnmanagedType.I1)]
         public static extern bool init();
 
-        [DllImport("__Internal", EntryPoint = "getWindowSize_ios")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "getWindowSize_ios")]
         public static extern void getWindowSize(ref int w, ref int h);
 
-        [DllImport("__Internal", EntryPoint = "getScreenSize_ios")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "getScreenSize_ios")]
         public static extern void getScreenSize(ref int w, ref int h);
 
-        [DllImport("__Internal", EntryPoint = "getFramebufferSize_ios")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "getFramebufferSize_ios")]
         public static extern void getFramebufferSize(ref int w, ref int h);
 
-        [DllImport("__Internal", EntryPoint = "getWindowFrameSize_ios")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "getWindowFrameSize_ios")]
         public static extern void getWindowFrameSize(ref int left, ref int top, ref int right, ref int bottom);
 
-        [DllImport("__Internal", EntryPoint = "shutdown_ios")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "shutdown_ios")]
         public static extern void shutdown(int exitCode);
 
-        [DllImport("__Internal", EntryPoint = "resize_ios")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "resize_ios")]
         public static extern void resize(int width, int height);
 
-        [DllImport("__Internal", EntryPoint = "messagePump_ios")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "messagePump_ios")]
         [return: MarshalAs(UnmanagedType.I1)]
         public static extern bool messagePump();
 
-        [DllImport("__Internal", EntryPoint = "time_ios")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "time_ios")]
         public static extern double time();
 
-        [DllImport("__Internal", EntryPoint = "pausecallbacksinit_ios")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "pausecallbacksinit_ios")]
         public static extern bool set_pause_callback(IntPtr func);
 
-        [DllImport("__Internal", EntryPoint = "destroycallbacksinit_ios")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "destroycallbacksinit_ios")]
         public static extern bool set_destroy_callback(IntPtr func);
 
-        [DllImport("__Internal", EntryPoint = "get_touch_info_stream_ios")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "get_touch_info_stream_ios")]
         public static extern unsafe int * getTouchInfoStream(ref int len);
 
-        [DllImport("__Internal", EntryPoint = "get_native_window_ios")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "get_native_window_ios")]
         public static extern unsafe void * getNativeWindow();
 
-        [DllImport("__Internal", EntryPoint = "reset_ios_input")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "reset_ios_input")]
         public static extern void resetStreams();
     }
 

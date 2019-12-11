@@ -30,7 +30,7 @@ namespace Unity.Platforms
     static class iOSNativeCalls
     {
         // calls to IOSWrapper.cpp
-        [DllImport("__Internal", EntryPoint = "rafcallbackinit_ios")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "rafcallbackinit_ios")]
         [return: MarshalAs(UnmanagedType.I1)]
         public static extern bool set_animation_frame_callback(IntPtr func);
     }

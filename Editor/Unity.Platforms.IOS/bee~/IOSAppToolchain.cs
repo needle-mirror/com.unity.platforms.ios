@@ -35,8 +35,6 @@ namespace Bee.Toolchain.IOS
 
         public override NativeProgramFormat ExecutableFormat { get; }
 
-        public override NativeProgramFormat DynamicLibraryFormat { get; }
-
         private static NPath _XcodePath = null;
 
         private static NPath XcodePath
@@ -96,7 +94,6 @@ namespace Bee.Toolchain.IOS
         public IOSAppToolchain() : base((new UserIOSSdkLocator()).UserIOSSdk(XcodePath))
         {
             ExecutableFormat = new IOSAppMainModuleFormat(this);
-            DynamicLibraryFormat = StaticLibraryFormat;
         }
     }
 

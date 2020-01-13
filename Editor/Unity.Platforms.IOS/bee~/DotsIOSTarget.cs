@@ -12,5 +12,5 @@ class DotsIOSTarget : DotsBuildSystemTarget
 
     public override string Identifier => "ios";
 
-    public override ToolChain ToolChain => IOSAppToolchain.ToolChain_IOSAppArm64;
+    public override ToolChain ToolChain => IOSAppToolchain.GetIOSAppToolchain(true);
 }

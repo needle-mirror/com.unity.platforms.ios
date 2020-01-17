@@ -120,46 +120,21 @@ namespace Bee.Toolchain.IOS
         }
     }
 
-    //TODO: should be inherited from XcodeStaticLinker, but it is sealed
-    internal class IOSAppMainModuleLinker : StaticLinker
+    internal class IOSAppMainModuleLinker : XcodeStaticLinker
     {
         private NPath ChangeMainModuleName(NPath target)
         {
-            // need to rename to make it start with "lib", otherwise Android have problems with loading native library
             return target.ChangeExtension("a");
         }
 
-        protected override bool SupportsResponseFile => false; // libtool does not support response files
-
         public IOSAppMainModuleLinker(ToolChain toolChain) : base(toolChain) {}
-
-        protected override IEnumerable<string> CommandLineFlagsForLibrary(PrecompiledLibrary library, CodeGen codegen)
-        {
-            if (BundleStaticLibraryDependencies && library.Static)
-                yield return library.InQuotes();
-        }
 
         protected override IEnumerable<string> CommandLineFlagsFor(NPath destination, CodeGen codegen, IEnumerable<NPath> objectFiles)
         {
-            if (Toolchain.Architecture is ARMv7Architecture)
+            foreach (var flag in base.CommandLineFlagsFor(ChangeMainModuleName(destination), codegen, objectFiles))
             {
-                yield return "-arch_only";
-                yield return "armv7";
+                yield return flag;
             }
-
-            if (Toolchain.Architecture is Arm64Architecture)
-            {
-                yield return "-arch_only";
-                yield return "arm64";
-            }
-
-            yield return "-static";
-
-            foreach (var objectFile in objectFiles)
-                yield return objectFile.InQuotes();
-
-            yield return "-o";
-            yield return ChangeMainModuleName(destination).InQuotes();
         }
 
         protected override BuiltNativeProgram BuiltNativeProgramFor(NPath destination, IEnumerable<PrecompiledLibrary> allLibraries)

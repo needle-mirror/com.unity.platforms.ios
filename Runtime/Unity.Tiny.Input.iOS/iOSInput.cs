@@ -1,7 +1,10 @@
+using Unity.Entities;
 using Unity.Tiny.Input;
 
 namespace Unity.Tiny.iOS
 {
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
+    [UpdateAfter(typeof(iOSWindowSystem))]
     public class iOSInputSystem : InputSystem
     {
         protected override void OnStartRunning()

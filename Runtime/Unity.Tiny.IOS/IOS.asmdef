@@ -3,7 +3,8 @@
     "references": [
         "Unity.Entities",
         "Unity.Mathematics",
-        "Unity.Tiny.Core"
+        "Unity.Tiny.Core",
+        "Unity.Platforms.Common"
     ],
     "includePlatforms": [
         "iOS"

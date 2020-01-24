@@ -161,7 +161,7 @@ namespace Bee.Toolchain.IOS
 
         public void SetAppPackagingParameters(String gameName, CodeGen codeGen, IEnumerable<IDeployable> supportFiles)
         {
-            m_gameName = gameName.Replace(".","-");
+            m_gameName = gameName;
             m_codeGen = codeGen;
             m_supportFiles = supportFiles;
         }

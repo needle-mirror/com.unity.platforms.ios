@@ -10,6 +10,8 @@
 static bool shouldClose = false;
 static int windowW = 0;
 static int windowH = 0;
+static int deviceOrientation;
+static int screenOrientation;
 static void* nativeWindow = NULL;
 // input
 static std::vector<int> touch_info_stream;
@@ -17,6 +19,12 @@ static std::vector<int> touch_info_stream;
 static bool (*raf)() = 0;
 static void (*pausef)(int) = 0;
 static void (*destroyf)() = 0;
+static void (*device_orientationf)(int) = 0;
+
+void setOrientationMask(int orientationMask);
+void rotateToDeviceOrientation();
+void rotateToAllowedOrientation();
+void rotateToOrientation(int orientation);
 
 DOTS_EXPORT(bool)
 init_ios() {
@@ -43,10 +51,15 @@ getFramebufferSize_ios(int *width, int *height) {
 }
 
 DOTS_EXPORT(void)
-getWindowFrameSize(int *left, int *top, int *right, int *bottom) {
+getWindowFrameSize_ios(int *left, int *top, int *right, int *bottom) {
     *left = *top = 0;
     *right = windowW;
     *bottom = windowH;
+}
+
+DOTS_EXPORT(void)
+getScreenOrientation_ios(int *orientation) {
+    *orientation = screenOrientation;
 }
 
 DOTS_EXPORT(void)
@@ -92,7 +105,7 @@ rafcallbackinit_ios(bool (*func)()) {
 }
 
 DOTS_EXPORT(bool)
-pausecallbacksinit_ios(void (*func)(int)) {
+pausecallbackinit_ios(void (*func)(int)) {
     if (pausef)
         return false;
     pausef = func;
@@ -100,10 +113,20 @@ pausecallbacksinit_ios(void (*func)(int)) {
 }
 
 DOTS_EXPORT(bool)
-destroycallbacksinit_ios(void (*func)()) {
+destroycallbackinit_ios(void (*func)()) {
     if (destroyf)
         return false;
     destroyf = func;
+    return true;
+}
+
+DOTS_EXPORT(bool)
+device_orientationcallbackinit_ios(void (*func)(int)) {
+    if (device_orientationf)
+        return false;
+    device_orientationf = func;
+    if (device_orientationf)
+        device_orientationf(deviceOrientation);
     return true;
 }
 
@@ -125,11 +148,30 @@ reset_ios_input()
 }
 
 DOTS_EXPORT(void)
-init(void *nwh, int width, int height)
+setOrientationMask_ios(int orientationMask)
+{
+    setOrientationMask(orientationMask);
+}
+
+DOTS_EXPORT(void)
+rotateToDeviceOrientation_ios()
+{
+    rotateToDeviceOrientation();
+}
+
+DOTS_EXPORT(void)
+rotateToAllowedOrientation_ios()
+{
+    rotateToAllowedOrientation();
+}
+
+DOTS_EXPORT(void)
+init(void *nwh, int width, int height, int orientation)
 {
     printf("init %d x %d\n", width, height);
     windowW = width;
     windowH = height;
+    screenOrientation = orientation;
     nativeWindow = nwh;
 }
 
@@ -161,4 +203,12 @@ touchevent(int id, int action, int xpos, int ypos)
     touch_info_stream.push_back((int)action);
     touch_info_stream.push_back((int)xpos);
     touch_info_stream.push_back(windowH - 1 - (int)ypos);
+}
+
+DOTS_EXPORT(void)
+deviceOrientationChanged(int orientation)
+{
+    deviceOrientation = orientation;
+    if (device_orientationf)
+        device_orientationf(orientation);
 }

@@ -5,6 +5,7 @@
 
 @property (strong, nonatomic) UIWindow *m_window;
 @property (strong, nonatomic) TinyView *m_view;
+@property (strong, nonatomic) TinyViewController *m_viewController;
 
 @end
 

@@ -17,6 +17,8 @@ static void* m_device = NULL;
 
 static void* m_nwh = NULL;
 
+static UIInterfaceOrientationMask m_orientationMask;
+
 @implementation TinyView
 
 + (Class)layerClass
@@ -44,6 +46,7 @@ static void* m_nwh = NULL;
     if (nil != self)
     {
         m_nwh = (__bridge void*)self.layer;
+        m_orientationMask = [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone ? UIInterfaceOrientationMaskAllButUpsideDown :  UIInterfaceOrientationMaskAll;
         // do we need to pass m_device to PlatformData.context ?
     }
     return self;
@@ -53,7 +56,17 @@ static void* m_nwh = NULL;
 {
     uint32_t frameW = (uint32_t)(self.contentScaleFactor * self.frame.size.width);
     uint32_t frameH = (uint32_t)(self.contentScaleFactor * self.frame.size.height);
-    init(m_nwh, frameW, frameH);
+    uint32_t orientation = 0;
+    if (@available(iOS 13, *))
+    {
+        orientation = (uint32_t)[(UIWindowScene*)[[UIApplication sharedApplication] connectedScenes].allObjects.firstObject interfaceOrientation];
+    }
+    else
+    {
+        orientation = (uint32_t)[[UIApplication sharedApplication] statusBarOrientation];
+    }
+
+    init(m_nwh, frameW, frameH, orientation);
 }
 
 - (void)start
@@ -100,7 +113,7 @@ static void* m_nwh = NULL;
 
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations
 {
-    return [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone ? UIInterfaceOrientationMaskAllButUpsideDown :  UIInterfaceOrientationMaskAll;
+    return m_orientationMask;
 }
 
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator
@@ -138,3 +151,10 @@ static void* m_nwh = NULL;
 }
 
 @end
+
+void setOrientationMask(int orientation)
+{
+    m_orientationMask = (UIInterfaceOrientationMask)orientation;
+}
+
+

@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using Unity.Entities;
 using System.Runtime.InteropServices;
+using Unity.Assertions;
 using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -15,7 +16,7 @@ namespace Unity.Tiny.iOS
         private static iOSWindowSystem sWindowSystem;
         public iOSWindowSystem()
         {
-            initialized = false;
+            m_initialized = false;
             sWindowSystem = this;
         }
 
@@ -29,8 +30,6 @@ namespace Unity.Tiny.iOS
         internal class MonoPInvokeCallbackAttribute : Attribute
         {
         }
-
-        public delegate void OnPauseDelegate(int pause);
 
         [MonoPInvokeCallbackAttribute]
         static void ManagedOnPauseCallback(int pause)
@@ -54,6 +53,24 @@ namespace Unity.Tiny.iOS
             iOSNativeCalls.set_destroy_callback(Marshal.GetFunctionPointerForDelegate((Action)ManagedOnDestroyCallback));
         }
 
+        [MonoPInvokeCallbackAttribute]
+        static void ManagedOnDeviceOrientationChangedCallback(int orientation)
+        {
+            sWindowSystem.OnDeviceOrientationChanged(orientation);
+        }
+
+        public void SetOnDeviceOrientationChangedCallback()
+        {
+            iOSNativeCalls.set_device_orientation_callback(Marshal.GetFunctionPointerForDelegate((Action<int>)ManagedOnDeviceOrientationChangedCallback));
+        }
+
+        private void SetCallbacks()
+        {
+            SetOnPauseCallback();
+            SetOnDestroyCallback();
+            SetOnDeviceOrientationChangedCallback();
+        }
+
         public override void DebugReadbackImage(out int w, out int h, out NativeArray<byte> pixels)
         {
             throw new InvalidOperationException("Can no longer read-back from window use BGFX instead.");
@@ -66,32 +83,34 @@ namespace Unity.Tiny.iOS
             // setup window
             Console.WriteLine("IOS Window init.");
 
-            var env = World.GetExistingSystem<TinyEnvironment>();
-            var config = env.GetConfigData<DisplayInfo>();
-
             try
             {
-                initialized = iOSNativeCalls.init();
+                m_initialized = iOSNativeCalls.init();
             } catch
             {
                 Console.WriteLine("  Exception during initialization.");
-                initialized = false;
+                m_initialized = false;
             }
-            if (!initialized)
+            if (!m_initialized)
             {
                 Console.WriteLine("  Failed.");
                 World.QuitUpdate = true;
                 return;
             }
 
-            SetOnPauseCallback();
-            SetOnDestroyCallback();
+            SetCallbacks();
+
+            var env = World.GetExistingSystem<TinyEnvironment>();
+            var config = env.GetConfigData<DisplayInfo>();
 
             int winw = 0, winh = 0;
             iOSNativeCalls.getWindowSize(ref winw, ref winh);
+            int screenOrientation = 0;
+            iOSNativeCalls.getScreenOrientation(ref screenOrientation);
+            m_screenOrientation = ConvertFromiOSOrientation(screenOrientation);
             config.focused = true;
             config.visible = true;
-            config.orientation = winw >= winh ? ScreenOrientation.Landscape : ScreenOrientation.Portrait;
+            config.orientation = m_screenOrientation;
             config.frameWidth = winw;
             config.frameHeight = winh;
             int sw = 0, sh = 0;
@@ -105,36 +124,45 @@ namespace Unity.Tiny.iOS
             config.framebufferWidth = fbw;
             config.framebufferHeight = fbh;
             env.SetConfigData(config);
+            iOSNativeCalls.set_orientation_mask(ConvertToiOSOrientationMask(m_screenOrientationMask));
+            iOSNativeCalls.rotate_to_allowed_orientation();
 
-            frameTime = iOSNativeCalls.time();
+            m_frameTime = iOSNativeCalls.time();
         }
 
         protected override void OnDestroy()
         {
             // close window
-            if (initialized)
+            if (m_initialized)
             {
                 Console.WriteLine("iOS Window shutdown.");
                 iOSNativeCalls.shutdown(0);
-                initialized = false;
+                m_initialized = false;
             }
         }
 
         protected override void OnUpdate()
         {
-            if (!initialized)
+            if (!m_initialized)
                 return;
 
             var env = World.GetExistingSystem<TinyEnvironment>();
             var config = env.GetConfigData<DisplayInfo>();
             int winw = 0, winh = 0;
             iOSNativeCalls.getWindowSize(ref winw, ref winh);
-            if (winw != config.width || winh != config.height)
+            int screenOrientation = 0;
+            iOSNativeCalls.getScreenOrientation(ref screenOrientation);
+            m_screenOrientation = ConvertFromiOSOrientation(screenOrientation);
+            if (winw != config.width || winh != config.height || m_screenOrientation != config.orientation)
             {
                 if (config.autoSizeToFrame)
                 {
                     Console.WriteLine("IOS Window update size.");
-                    config.orientation = winw >= winh ? ScreenOrientation.Landscape : ScreenOrientation.Portrait;
+                    if (m_screenOrientation != config.orientation)
+                    {
+                        PlatformEvents.SendScreenOrientationEvent(this, new ScreenOrientationEvent((int)m_screenOrientation));
+                        config.orientation = m_screenOrientation;
+                    }
                     config.width = winw;
                     config.height = winh;
                     config.frameWidth = winw;
@@ -155,17 +183,104 @@ namespace Unity.Tiny.iOS
                 Console.WriteLine("iOS message pump exit.");
                 iOSNativeCalls.shutdown(1);
                 World.QuitUpdate = true;
-                initialized = false;
+                m_initialized = false;
                 return;
             }
             double newFrameTime = iOSNativeCalls.time();
-            var timeData = env.StepWallRealtimeFrame(newFrameTime - frameTime);
+            var timeData = env.StepWallRealtimeFrame(newFrameTime - m_frameTime);
             World.SetTime(timeData);
-            frameTime = newFrameTime;
+            m_frameTime = newFrameTime;
         }
 
-        private bool initialized;
-        private double frameTime;
+        // taken from iOS SDK (UIDevice.h)
+        enum UIDeviceOrientation
+        {
+            UIDeviceOrientationUnknown,
+            UIDeviceOrientationPortrait,            // Device oriented vertically, home button on the bottom
+            UIDeviceOrientationPortraitUpsideDown,  // Device oriented vertically, home button on the top
+            UIDeviceOrientationLandscapeLeft,       // Device oriented horizontally, home button on the right
+            UIDeviceOrientationLandscapeRight,      // Device oriented horizontally, home button on the left
+            UIDeviceOrientationFaceUp,              // Device oriented flat, face up
+            UIDeviceOrientationFaceDown             // Device oriented flat, face down
+        }
+
+        // taken from iOS SDK (UIApplication.h)
+        // Note that UIInterfaceOrientationLandscapeLeft is equal to UIDeviceOrientationLandscapeRight (and vice versa).
+        // This is because rotating the device to the left requires rotating the content to the right.
+        enum UIInterfaceOrientation {
+            UIInterfaceOrientationUnknown            = UIDeviceOrientation.UIDeviceOrientationUnknown,
+            UIInterfaceOrientationPortrait           = UIDeviceOrientation.UIDeviceOrientationPortrait,
+            UIInterfaceOrientationPortraitUpsideDown = UIDeviceOrientation.UIDeviceOrientationPortraitUpsideDown,
+            UIInterfaceOrientationLandscapeLeft      = UIDeviceOrientation.UIDeviceOrientationLandscapeRight,
+            UIInterfaceOrientationLandscapeRight     = UIDeviceOrientation.UIDeviceOrientationLandscapeLeft
+        }
+
+        private ScreenOrientation ConvertFromiOSOrientation(int/*UIDeviceOrientation*/ orientation)
+        {
+            // for consistency in Tiny for both device and screen orientations we're using Interface orientation based values
+            switch (orientation)
+            {
+                case (int)UIDeviceOrientation.UIDeviceOrientationPortrait : return ScreenOrientation.Portrait;
+                case (int)UIDeviceOrientation.UIDeviceOrientationLandscapeLeft : return ScreenOrientation.Landscape;
+                case (int)UIDeviceOrientation.UIDeviceOrientationPortraitUpsideDown : return ScreenOrientation.ReversePortrait;
+                case (int)UIDeviceOrientation.UIDeviceOrientationLandscapeRight : return ScreenOrientation.ReverseLandscape;
+            }
+            // returning unknown orientation for Unknown, FaceUp and FaceDown
+            return ScreenOrientation.Unknown; 
+        }
+
+        private int ConvertToiOSOrientationMask(ScreenOrientation orientation)
+        {
+            int ret = 0;
+            if ((orientation & ScreenOrientation.Portrait) != 0) ret |= (1 << (int)UIInterfaceOrientation.UIInterfaceOrientationPortrait);
+            if ((orientation & ScreenOrientation.ReversePortrait) != 0) ret |= (1 << (int)UIInterfaceOrientation.UIInterfaceOrientationPortraitUpsideDown);
+            if ((orientation & ScreenOrientation.Landscape) != 0) ret |= (1 << (int)UIInterfaceOrientation.UIInterfaceOrientationLandscapeRight);
+            if ((orientation & ScreenOrientation.ReverseLandscape) != 0) ret |= (1 << (int)UIInterfaceOrientation.UIInterfaceOrientationLandscapeLeft);
+            return ret;
+        }
+
+        public override void SetOrientationMask(ScreenOrientation orientation)
+        {
+            Assert.IsTrue(orientation != ScreenOrientation.Unknown, "Orientation mask cannot be 0");
+            Assert.IsTrue(orientation != ScreenOrientation.ReversePortrait, "Orientation mask cannot be PortraitUpsideDown for iOS because some devices don't allow it");
+            m_screenOrientationMask = orientation;
+            var screenOrientation = GetOrientation();
+            iOSNativeCalls.set_orientation_mask(ConvertToiOSOrientationMask(orientation));
+            if (m_deviceOrientation != screenOrientation && (m_deviceOrientation & m_screenOrientationMask) != 0)
+            {
+                // it is possible to set screen orientation based on current device orientation
+                iOSNativeCalls.rotate_to_device_orientation();
+            }
+            else if ((screenOrientation & m_screenOrientationMask) == 0)
+            {
+                // current orientation is not allowed amymore
+                // let iOS rotate to allowed orientation based on new mask
+                iOSNativeCalls.rotate_to_allowed_orientation();
+            }
+        }
+
+        public override ScreenOrientation GetOrientationMask()
+        {
+            return m_screenOrientationMask;
+        }
+
+        private void OnDeviceOrientationChanged(int orientation)
+        {
+            var deviceOrientation = ConvertFromiOSOrientation(orientation);
+            if (deviceOrientation != m_deviceOrientation)
+            {
+                PlatformEvents.SendDeviceOrientationEvent(this, new DeviceOrientationEvent((int)deviceOrientation));
+                m_deviceOrientation = deviceOrientation;
+            }
+        }
+
+        private ScreenOrientation m_deviceOrientation = ScreenOrientation.Unknown;
+        private ScreenOrientation m_screenOrientation = ScreenOrientation.Unknown;
+        // TODO probably initialize with the value from build settings
+        private ScreenOrientation m_screenOrientationMask = ScreenOrientation.Landscape;
+
+        private bool m_initialized;
+        private double m_frameTime;
     }
 
     public static class iOSNativeCalls
@@ -186,6 +301,9 @@ namespace Unity.Tiny.iOS
         [DllImport("lib_unity_tiny_ios", EntryPoint = "getWindowFrameSize_ios")]
         public static extern void getWindowFrameSize(ref int left, ref int top, ref int right, ref int bottom);
 
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "getScreenOrientation_ios")]
+        public static extern void getScreenOrientation(ref int orientation);
+
         [DllImport("lib_unity_tiny_ios", EntryPoint = "shutdown_ios")]
         public static extern void shutdown(int exitCode);
 
@@ -199,11 +317,14 @@ namespace Unity.Tiny.iOS
         [DllImport("lib_unity_tiny_ios", EntryPoint = "time_ios")]
         public static extern double time();
 
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "pausecallbacksinit_ios")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "pausecallbackinit_ios")]
         public static extern bool set_pause_callback(IntPtr func);
 
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "destroycallbacksinit_ios")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "destroycallbackinit_ios")]
         public static extern bool set_destroy_callback(IntPtr func);
+
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "device_orientationcallbackinit_ios")]
+        public static extern bool set_device_orientation_callback(IntPtr func);
 
         [DllImport("lib_unity_tiny_ios", EntryPoint = "get_touch_info_stream_ios")]
         public static extern unsafe int * getTouchInfoStream(ref int len);
@@ -213,6 +334,16 @@ namespace Unity.Tiny.iOS
 
         [DllImport("lib_unity_tiny_ios", EntryPoint = "reset_ios_input")]
         public static extern void resetStreams();
+
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "setOrientationMask_ios")]
+        public static extern bool set_orientation_mask(int orientation);
+
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "rotateToDeviceOrientation_ios")]
+        public static extern bool rotate_to_device_orientation();
+
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "rotateToAllowedOrientation_ios")]
+        public static extern bool rotate_to_allowed_orientation();
+
     }
 
 }

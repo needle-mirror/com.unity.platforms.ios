@@ -189,8 +189,7 @@ namespace Bee.Toolchain.IOS
             // copy and patch pbxproj file
             var pbxPath = xcodeprojPath.Combine("project.pbxproj");
             var pbxTemplatePath = xcodeSrcPath.Combine($"{TinyProjectName}.xcodeproj", "project.pbxproj");
-            var exportManifestPath = new NPath(m_gameName).Combine("export.manifest");
-            var result = SetupXCodeProject(pbxTemplatePath, exportManifestPath.FileExists());
+            var result = SetupXCodeProject(pbxTemplatePath);
             Backend.Current.AddWriteTextAction(pbxPath, result);
             Backend.Current.AddDependency(pbxPath, mainLibPath);
 
@@ -251,7 +250,7 @@ namespace Bee.Toolchain.IOS
             }
         }
 
-        private string SetupXCodeProject(NPath pbxTemplatePath, bool dataExists)
+        private string SetupXCodeProject(NPath pbxTemplatePath)
         {
             PBXProject pbxProject = new PBXProject();
             pbxProject.ReadFromFile(pbxTemplatePath.ToString());
@@ -271,6 +270,7 @@ namespace Bee.Toolchain.IOS
                 }
             }
 
+            var dataExists = false;
             foreach (var r in m_supportFiles)
             {
                 // skipping all subdirectories
@@ -280,6 +280,10 @@ namespace Bee.Toolchain.IOS
                 {
                     var fileGuid = pbxProject.AddFile(r.Path.FileName, r.Path.FileName);
                     pbxProject.AddFileToBuild(target, fileGuid);
+                }
+                else if (r.Path.HasDirectory("Data"))
+                {
+                    dataExists = true;
                 }
             }
             // adding Data folder

@@ -12,9 +12,6 @@
     NSString *placeholderFile = @"placeholder";
     NSString *path = [[NSBundle mainBundle] pathForResource:placeholderFile ofType:@""];
     chdir([path substringToIndex: (path.length - placeholderFile.length)].UTF8String);
-    
-    start();
-    
     CGRect rect = [ [UIScreen mainScreen] bounds];
     m_window = [ [UIWindow alloc] initWithFrame: rect];
     m_view = [ [TinyView alloc] initWithFrame: rect];

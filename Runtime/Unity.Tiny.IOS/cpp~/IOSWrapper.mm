@@ -6,6 +6,7 @@
 #include <math.h>
 #include <time.h>
 #include <vector>
+#include "IOSSensors.h"
 
 static bool shouldClose = false;
 static int windowW = 0;
@@ -145,6 +146,39 @@ DOTS_EXPORT(void)
 reset_ios_input()
 {
     touch_info_stream.clear();
+    m_iOSSensors.ResetSensorsData();
+}
+
+DOTS_EXPORT(bool)
+available_sensor_ios(int type)
+{
+    return m_iOSSensors.AvailableSensor((iOSSensorType)type);
+}
+
+DOTS_EXPORT(bool)
+enable_sensor_ios(int type, bool enable)
+{
+    return m_iOSSensors.EnableSensor((iOSSensorType)type, enable);
+}
+
+DOTS_EXPORT(void)
+set_sensor_frequency_ios(int type, int rate)
+{
+    m_iOSSensors.SetSamplingFrequency((iOSSensorType)type, rate);
+}
+
+DOTS_EXPORT(int)
+get_sensor_frequency_ios(int type)
+{
+    return m_iOSSensors.GetSamplingFrequency((iOSSensorType)type);
+}
+
+DOTS_EXPORT(const double*)
+get_sensor_stream_ios(int type, int *len)
+{
+    if (len == NULL)
+        return NULL;
+    return m_iOSSensors.GetSensorData((iOSSensorType)type, len);
 }
 
 DOTS_EXPORT(void)
@@ -163,6 +197,14 @@ DOTS_EXPORT(void)
 rotateToAllowedOrientation_ios()
 {
     rotateToAllowedOrientation();
+}
+
+extern "C" void start();
+DOTS_EXPORT(void)
+startapp()
+{
+    m_iOSSensors.InitializeSensors();
+    start();
 }
 
 DOTS_EXPORT(void)
@@ -192,6 +234,7 @@ pauseapp(int paused)
 DOTS_EXPORT(void)
 destroyapp()
 {
+    m_iOSSensors.ShutdownSensors();
     if (destroyf)
         destroyf();
 }
@@ -212,3 +255,21 @@ deviceOrientationChanged(int orientation)
     if (device_orientationf)
         device_orientationf(orientation);
 }
+
+#if UNITY_DOTSPLAYER_IL2CPP_WAIT_FOR_MANAGED_DEBUGGER
+
+typedef void(*UpdateCallback)();
+void ShowDebuggerAttachDialog(const char* message, UpdateCallback updateCallback);
+
+bool waitForManagedDebugger = true;
+
+DOTS_EXPORT(void)
+ShowDebuggerAttachDialog(const char* message)
+{
+    ShowDebuggerAttachDialog(message, NULL);
+}
+#else
+
+bool waitForManagedDebugger = false;
+
+#endif // UNITY_DOTSPLAYER_IL2CPP_WAIT_FOR_MANAGED_DEBUGGER

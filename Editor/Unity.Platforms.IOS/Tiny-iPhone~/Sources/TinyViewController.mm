@@ -19,6 +19,10 @@ static void* m_nwh = NULL;
 
 static UIInterfaceOrientationMask m_orientationMask;
 
+static bool appStarted = false;
+
+extern bool waitForManagedDebugger;
+
 @implementation TinyView
 
 + (Class)layerClass
@@ -30,13 +34,13 @@ static UIInterfaceOrientationMask m_orientationMask;
         m_device = MTLCreateSystemDefaultDevice(); // is metal supported on this device (is there a better way to do this - without creating device ?)
         if (m_device)
         {
-            // TODO: get rid of OpenGLES for iOS when problem with Metal on A7/A8 based devices is fixed   
+            // TODO: get rid of OpenGLES for iOS when problem with Metal on A7/A8 based devices is fixed
             if ([m_device supportsFeatureSet:MTLFeatureSet_iOS_GPUFamily3_v1])
                 return metalClass;
         }
     }
 #endif
-    
+
     return [CAEAGLLayer class];
 }
 
@@ -92,7 +96,8 @@ static UIInterfaceOrientationMask m_orientationMask;
 - (void)renderFrame
 {
     InputProcess();
-    step();
+    if (!waitForManagedDebugger)
+        step();
 }
 @end
 
@@ -104,6 +109,16 @@ static UIInterfaceOrientationMask m_orientationMask;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+}
+
+- (void) viewDidAppear:(BOOL) animated
+{
+    [super viewDidAppear:animated];
+    if (!appStarted)
+    {
+        startapp();
+        appStarted = true;
+    }
 }
 
 - (BOOL)shouldAutorotate

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		03EE99F924094D720096AF17 /* iPhoneDialog.mm in Sources */ = {isa = PBXBuildFile; fileRef = 03EE99F824094D720096AF17 /* iPhoneDialog.mm */; };
 		852D0F68223170A600096C4E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 852D0F67223170A600096C4E /* Assets.xcassets */; };
 		852D0F6E223170A600096C4E /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 852D0F6D223170A600096C4E /* main.mm */; };
 		8578EE4B2396AE1800867728 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8578EE4A2396AE1800867728 /* AVFoundation.framework */; };
@@ -23,6 +24,7 @@
 		85CEC172238EB1D800B49C9E /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 85CEC171238EB1D800B49C9E /* UIKit.framework */; };
 		85CEC174238EB23C00B49C9E /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 85CEC173238EB23C00B49C9E /* Metal.framework */; };
 		85CEC178238EB30A00B49C9E /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 85CEC177238EB30A00B49C9E /* QuartzCore.framework */; };
+		85DDBCFE240FB69A008E3ACA /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 85DDBCFD240FB69A008E3ACA /* CoreMotion.framework */; };
 		85DF36D6228EA4B0008E8083 /* placeholder in Resources */ = {isa = PBXBuildFile; fileRef = 85DF36D5228EA4B0008E8083 /* placeholder */; };
 /* End PBXBuildFile section */
 
@@ -40,6 +42,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		03EE99F824094D720096AF17 /* iPhoneDialog.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = iPhoneDialog.mm; sourceTree = "<group>"; };
 		852D0F54223170A400096C4E /* Tiny-iPhone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Tiny-iPhone.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		852D0F57223170A400096C4E /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		852D0F67223170A600096C4E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -61,6 +64,7 @@
 		85CEC171238EB1D800B49C9E /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		85CEC173238EB23C00B49C9E /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		85CEC177238EB30A00B49C9E /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		85DDBCFD240FB69A008E3ACA /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
 		85DF36D3228E9013008E8083 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		85DF36D5228EA4B0008E8083 /* placeholder */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = placeholder; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -76,6 +80,7 @@
 				8578EE4D2396AE1D00867728 /* AudioToolbox.framework in Frameworks */,
 				8578EE4B2396AE1800867728 /* AVFoundation.framework in Frameworks */,
 				8578EE4F2396AF0300867728 /* OpenGLES.framework in Frameworks */,
+				85DDBCFE240FB69A008E3ACA /* CoreMotion.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -108,6 +113,7 @@
 		852D0F56223170A400096C4E /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				03EE99F824094D720096AF17 /* iPhoneDialog.mm */,
 				85CEC16F238EB12A00B49C9E /* AppDelegate.mm */,
 				85CEC16D238EB0E200B49C9E /* TinyViewController.mm */,
 				85CEC16A238E78A700B49C9E /* iPhoneInputImpl.h */,
@@ -125,6 +131,7 @@
 		852D0F742231717D00096C4E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				85DDBCFD240FB69A008E3ACA /* CoreMotion.framework */,
 				8578EE4E2396AF0300867728 /* OpenGLES.framework */,
 				8578EE4C2396AE1D00867728 /* AudioToolbox.framework */,
 				8578EE4A2396AE1800867728 /* AVFoundation.framework */,
@@ -214,6 +221,7 @@
 				852D0F6E223170A600096C4E /* main.mm in Sources */,
 				85CEC170238EB12A00B49C9E /* AppDelegate.mm in Sources */,
 				85CEC16C238E78A700B49C9E /* iPhoneInputImpl.mm in Sources */,
+				03EE99F924094D720096AF17 /* iPhoneDialog.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

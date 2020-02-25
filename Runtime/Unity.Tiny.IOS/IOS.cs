@@ -277,7 +277,7 @@ namespace Unity.Tiny.iOS
         private ScreenOrientation m_deviceOrientation = ScreenOrientation.Unknown;
         private ScreenOrientation m_screenOrientation = ScreenOrientation.Unknown;
         // TODO probably initialize with the value from build settings
-        private ScreenOrientation m_screenOrientationMask = ScreenOrientation.Landscape;
+        private ScreenOrientation m_screenOrientationMask = ScreenOrientation.AutoRotation;
 
         private bool m_initialized;
         private double m_frameTime;
@@ -334,6 +334,21 @@ namespace Unity.Tiny.iOS
 
         [DllImport("lib_unity_tiny_ios", EntryPoint = "reset_ios_input")]
         public static extern void resetStreams();
+
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "available_sensor_ios")]
+        public static extern bool availableSensor(int type);
+
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "enable_sensor_ios")]
+        public static extern bool enableSensor(int type, bool enable);
+
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "set_sensor_frequency_ios")]
+        public static extern void setSensorFrequency(int type, int rate);
+
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "get_sensor_frequency_ios")]
+        public static extern int getSensorFrequency(int type);
+
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "get_sensor_stream_ios")]
+        public static extern unsafe double * getSensorStream(int type, ref int len);
 
         [DllImport("lib_unity_tiny_ios", EntryPoint = "setOrientationMask_ios")]
         public static extern bool set_orientation_mask(int orientation);

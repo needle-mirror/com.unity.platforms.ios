@@ -12,6 +12,7 @@ namespace Unity.Platforms.iOS
         public override string BeeTargetName => "ios";
         public override string ExecutableExtension => "";
         public override string UnityPlatformName => nameof(UnityEditor.BuildTarget.iOS);
+        public override bool UsesIL2CPP => true;
 
         public override bool Run(FileInfo buildTarget)
         {

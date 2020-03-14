@@ -15,7 +15,6 @@
     CGRect rect = [ [UIScreen mainScreen] bounds];
     m_window = [ [UIWindow alloc] initWithFrame: rect];
     m_view = [ [TinyView alloc] initWithFrame: rect];
-    [m_window addSubview: m_view];
     
     m_viewController = [[TinyViewController alloc] init];
     m_viewController.view = m_view;

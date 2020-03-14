@@ -30,6 +30,22 @@
     return YES;
 }
 
+-(void)reInitViewController
+{
+    UIViewController* prevController = m_viewController;
+    m_viewController.view = nil;
+    m_viewController = [[TinyViewController alloc] init];
+    m_viewController.view = m_view;
+    
+    [UIView transitionWithView:self.m_window duration:0.15 options:UIViewAnimationOptionTransitionNone animations:^{
+            [self.m_window setRootViewController:self.m_viewController];
+            [self.m_window makeKeyAndVisible];
+    } completion:^(BOOL){
+        [prevController dismissViewControllerAnimated:NO completion:nil];
+        [self.m_view setNeedsLayout];
+    }];
+}
+
 
 - (void)applicationWillResignActive:(UIApplication *)application {
     [m_view stop];
@@ -69,24 +85,5 @@ void rotateToDeviceOrientation()
 
 void rotateToAllowedOrientation()
 {
-    TinyViewController *viewController = ((AppDelegate*)[[UIApplication sharedApplication] delegate]).m_viewController;
-    UIViewController *dummy = [[UIViewController alloc] init];
-    dummy.view = [[UIView alloc] init];
-    [viewController presentViewController:dummy animated:NO completion:^{
-        [viewController dismissViewControllerAnimated:YES completion:nil];
-    }];
+    [((AppDelegate*)[[UIApplication sharedApplication] delegate]) reInitViewController];
 }
-
-// TODO: investigate if this method can be implemented properly
-// current variant uses undocumented device orientation access and causes warnings: 
-// [App] if we're in the real pre-commit handler we can't actually add any new fences due to CA restriction
-/*static int orientationToSkip = -1;
-void rotateToOrientation(int orientation)
-{
-    int deviceOrientation = (int)[UIDevice currentDevice].orientation;
-    orientationToSkip = orientation;
-    [[UIDevice currentDevice] setValue: [NSNumber numberWithInt: orientation] forKey:@"orientation"];
-    [UIViewController attemptRotationToDeviceOrientation];
-    orientationToSkip = deviceOrientation;
-    [[UIDevice currentDevice] setValue: [NSNumber numberWithInt: deviceOrientation] forKey:@"orientation"];
-}*/

@@ -258,15 +258,15 @@ deviceOrientationChanged(int orientation)
 
 #if UNITY_DOTSPLAYER_IL2CPP_WAIT_FOR_MANAGED_DEBUGGER
 
-typedef void(*UpdateCallback)();
-void ShowDebuggerAttachDialog(const char* message, UpdateCallback updateCallback);
+typedef void(*BroadcastFunction)();
+void ShowDebuggerAttachDialogImpl(const char* message, BroadcastFunction broadcast);
 
 bool waitForManagedDebugger = true;
 
 DOTS_EXPORT(void)
-ShowDebuggerAttachDialog(const char* message)
+ShowDebuggerAttachDialog(const char* message, BroadcastFunction broadcast)
 {
-    ShowDebuggerAttachDialog(message, NULL);
+    ShowDebuggerAttachDialogImpl(message, broadcast);
 }
 #else
 

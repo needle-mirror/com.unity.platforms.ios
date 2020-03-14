@@ -3,10 +3,10 @@
 #import <MediaPlayer/MediaPlayer.h>
 #import <UIKit/UIViewController.h>
 
-typedef void(*UpdateCallback)();
+typedef void(*BroadcastFunction)();
 extern bool waitForManagedDebugger;
 
-void ShowDebuggerAttachDialog(const char* message, UpdateCallback updateCallback)
+void ShowDebuggerAttachDialogImpl(const char* message, BroadcastFunction broadcast)
 {
     __block int result = -1;
 
@@ -30,8 +30,8 @@ void ShowDebuggerAttachDialog(const char* message, UpdateCallback updateCallback
     [vc presentViewController: alert animated: NO completion: nil];
     while (result == -1)
     {
-        if (updateCallback)
-            updateCallback();
+        if (broadcast)
+            broadcast();
         [[NSRunLoop currentRunLoop] runUntilDate: [NSDate dateWithTimeIntervalSinceNow: 0.1f]];
     }
 

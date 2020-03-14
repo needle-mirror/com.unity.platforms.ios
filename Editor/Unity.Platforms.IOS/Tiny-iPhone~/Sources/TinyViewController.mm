@@ -52,6 +52,7 @@ extern bool waitForManagedDebugger;
         m_nwh = (__bridge void*)self.layer;
         m_orientationMask = [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone ? UIInterfaceOrientationMaskAllButUpsideDown :  UIInterfaceOrientationMaskAll;
         // do we need to pass m_device to PlatformData.context ?
+        InputInit(self);
     }
     return self;
 }
@@ -70,6 +71,7 @@ extern bool waitForManagedDebugger;
         orientation = (uint32_t)[[UIApplication sharedApplication] statusBarOrientation];
     }
 
+    CancelTouches();
     init(m_nwh, frameW, frameH, orientation);
 }
 
@@ -79,7 +81,6 @@ extern bool waitForManagedDebugger;
     {
         m_displayLink = [self.window.screen displayLinkWithTarget:self selector:@selector(renderFrame)];
         [m_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes]; // or NSDefaultRunLoopMode ?
-        InputInit(self);
     }
 }
 
@@ -89,7 +90,6 @@ extern bool waitForManagedDebugger;
     {
         [m_displayLink invalidate];
         m_displayLink = nil;
-        InputShutdown();
     }
 }
 
@@ -144,7 +144,6 @@ extern bool waitForManagedDebugger;
     return YES;
 }
 
-// very simple implementation, no multi-touch for now
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
     ProcessTouchEvents(self.view, touches, [event allTouches]);

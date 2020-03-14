@@ -60,7 +60,7 @@ Touch* FindTouch(UITouch const* native, uint eventFrame)
     for (unsigned q = 0; q < MaxTouchCount; ++q)
     {
         Touch& t = gTouches[q];
-        if (t.native != 0)
+        if (!t.isEmpty())
             continue;
 
         t.native = native;
@@ -70,7 +70,7 @@ Touch* FindTouch(UITouch const* native, uint eventFrame)
     }
 
     // this is always possible under sufficiently eager user and slow framerate
-    //ErrorString("Out of free touches!");
+    assert(false && "Out of free touches!");
     return 0;
 }
 
@@ -143,7 +143,7 @@ void FreeExpiredTouches(uint eventFrame)
     for (unsigned q = 0; q < gTouchesActiveBound; ++q)
     {
         Touch& touch = gTouches[q];
-        if (touch.isOld(eventFrame) && touch.isFinished())
+        if (!touch.isEmpty() && touch.isOld(eventFrame) && touch.isFinished())
             touch.native = 0;
     }
 
@@ -151,7 +151,7 @@ void FreeExpiredTouches(uint eventFrame)
     unsigned q = gTouchesActiveBound;
     for (; q > 0; --q)
     {
-        if (gTouches[q - 1].native != 0)
+        if (!gTouches[q - 1].isEmpty())
             break;
     }
     gTouchesActiveBound = q;
@@ -162,7 +162,7 @@ void UpdateTapTouches(uint eventFrame)
     for (unsigned q = 0; q < gTouchesActiveBound; ++q)
     {
         Touch& touch = gTouches[q];
-        if (touch.isOld(eventFrame) && !touch.isFinished() && touch.willBeFinishedNextFrame())
+        if (!touch.isEmpty() && touch.isOld(eventFrame) && !touch.isFinished() && touch.willBeFinishedNextFrame() && touch.endPhaseInQueue != 0)
         {
             touch.phase = touch.endPhaseInQueue;
             touch.endPhaseInQueue = 0;
@@ -176,7 +176,7 @@ void UpdateStationaryTouches(uint eventFrame)
     for (unsigned q = 0; q < gTouchesActiveBound; ++q)
     {
         Touch& touch = gTouches[q];
-        if (touch.isOld(eventFrame) && !touch.isFinished())
+        if (!touch.isEmpty() && touch.isOld(eventFrame) && !touch.isFinished())
         {
             touch.phase = UITouchPhaseStationary;
             touch.eventFrame = eventFrame;
@@ -188,17 +188,18 @@ void CancelStaleTouches(NSSet* allTouches)
 {
     for (unsigned q = 0; q < gTouchesActiveBound; ++q)
     {
-        if (gTouches[q].isFinished() || gTouches[q].willBeFinishedNextFrame())
+        Touch& touch = gTouches[q];
+        if (touch.isEmpty() || touch.isFinished() || touch.willBeFinishedNextFrame())
             continue;
 
         bool found = false;
-        for (UITouch* touch in allTouches)
-            found |= (gTouches[q].native == touch);
+        for (UITouch* ntouch in allTouches)
+            found |= (touch.native == ntouch);
 
         // In some cases when the app is returning from background touches can just disappear so we cancel those
         if (!found)
         {
-            gTouches[q].phase = UITouchPhaseCancelled;
+            touch.phase = UITouchPhaseCancelled;
         }
     }
 }
@@ -216,7 +217,7 @@ void CancelTouches()
     {
         Touch& touch = gTouches[i];
 
-        if (touch.isFinished() || touch.willBeFinishedNextFrame())
+        if (touch.isEmpty() || touch.isFinished() || touch.willBeFinishedNextFrame())
             continue;
 
         // if touch began this frame, we will delay end phase for one frame
@@ -249,6 +250,9 @@ void InputProcess()
     for (unsigned int i = 0; i < gTouchesActiveBound; i++)
     {
         Touch& touch = gTouches[i];
+        if (touch.isEmpty())
+            continue;
+
         int phase = -1;
         switch (touch.phase)
         {

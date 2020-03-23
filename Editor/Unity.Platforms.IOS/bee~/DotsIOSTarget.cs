@@ -13,4 +13,5 @@ class DotsIOSTarget : DotsBuildSystemTarget
     public override string Identifier => "ios";
 
     public override ToolChain ToolChain => IOSAppToolchain.GetIOSAppToolchain(true);
+    public override bool CanUseBurst => true;
 }

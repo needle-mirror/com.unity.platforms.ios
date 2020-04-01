@@ -151,7 +151,7 @@ namespace Bee.Toolchain.IOS
 
         private IOSAppToolchain m_iosAppToolchain;
         private String m_gameName;
-        private CodeGen m_codeGen;
+        private DotsConfiguration m_config;
         private IEnumerable<IDeployable> m_supportFiles;
 
         public IOSAppMainStaticLibrary(NPath path, IOSAppToolchain toolchain, params PrecompiledLibrary[] libraryDependencies) : base(path, libraryDependencies)
@@ -159,10 +159,10 @@ namespace Bee.Toolchain.IOS
             m_iosAppToolchain = toolchain;
         }
 
-        public void SetAppPackagingParameters(String gameName, CodeGen codeGen, IEnumerable<IDeployable> supportFiles)
+        public void SetAppPackagingParameters(String gameName, DotsConfiguration config, IEnumerable<IDeployable> supportFiles)
         {
             m_gameName = gameName;
-            m_codeGen = codeGen;
+            m_config = config;
             m_supportFiles = supportFiles;
         }
 
@@ -193,17 +193,24 @@ namespace Bee.Toolchain.IOS
             Backend.Current.AddWriteTextAction(pbxPath, result);
             Backend.Current.AddDependency(pbxPath, mainLibPath);
 
+            // copy and patch xcscheme file
+            var xcschemePath = xcodeprojPath.Combine("xcshareddata", "xcschemes", "Tiny-iPhone.xcscheme");
+            var xcschemeTemplatePath = xcodeSrcPath.Combine($"{TinyProjectName}.xcodeproj", "xcshareddata", "xcschemes", "Tiny-iPhone.xcscheme");
+            result = SetupXcScheme(xcschemeTemplatePath, m_config == DotsConfiguration.Release);
+            Backend.Current.AddWriteTextAction(xcschemePath, result);
+            Backend.Current.AddDependency(pbxPath, xcschemePath);
+
             // copy and patch Info.plist file
             var plistPath = xcodeProjectPath.Combine("Sources", "Info.plist");
             var plistTemplatePath = xcodeSrcPath.Combine("Sources", "Info.plist");
             result = SetupInfoPlist(plistTemplatePath);
             Backend.Current.AddWriteTextAction(plistPath, result);
-            Backend.Current.AddDependency(pbxPath, plistPath);
+            Backend.Current.AddDependency(xcschemePath, plistPath);
 
             // copy xcodeproj files
             foreach (var r in xcodeSrcPath.Files(true))
             {
-                if (r.Extension != "pbxproj" && r.FileName != "Info.plist")
+                if (r.Extension != "pbxproj" && r.Extension != "xcscheme" && r.FileName != "Info.plist")
                 {
                     var destPath = xcodeProjectPath.Combine(r.RelativeTo(xcodeSrcPath));
                     destPath = CopyTool.Instance().Setup(destPath, r);
@@ -325,6 +332,16 @@ namespace Bee.Toolchain.IOS
             }
             */
             return pbxProject.WriteToString();
+        }
+
+        private string SetupXcScheme(NPath xcSchemePath, bool release)
+        {
+            var text = xcSchemePath.ReadAllText();
+            var xcscheme= new XcScheme();
+            xcscheme.ReadFromString(text);
+            string buildConfigName = release ? "ReleaseForRunning" : "Debug";
+            xcscheme.SetBuildConfiguration(buildConfigName);
+            return xcscheme.WriteToString();
         }
 
         private string SetupInfoPlist(NPath plistTemplatePath)

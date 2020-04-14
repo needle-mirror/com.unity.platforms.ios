@@ -242,10 +242,13 @@ namespace Unity.Tiny.iOS
         public override void SetOrientationMask(ScreenOrientation orientation)
         {
             Assert.IsTrue(orientation != ScreenOrientation.Unknown, "Orientation mask cannot be 0");
-            Assert.IsTrue(orientation != ScreenOrientation.ReversePortrait, "Orientation mask cannot be PortraitUpsideDown for iOS because some devices don't allow it");
+            if (!iOSNativeCalls.set_orientation_mask(ConvertToiOSOrientationMask(orientation)))
+            {
+                Console.WriteLine("Orientation mask {orientation} is not allowed for this device");
+                return;
+            }
             m_screenOrientationMask = orientation;
             var screenOrientation = GetOrientation();
-            iOSNativeCalls.set_orientation_mask(ConvertToiOSOrientationMask(orientation));
             if (m_deviceOrientation != screenOrientation && (m_deviceOrientation & m_screenOrientationMask) != 0)
             {
                 // it is possible to set screen orientation based on current device orientation
@@ -326,13 +329,16 @@ namespace Unity.Tiny.iOS
         [DllImport("lib_unity_tiny_ios", EntryPoint = "device_orientationcallbackinit_ios")]
         public static extern bool set_device_orientation_callback(IntPtr func);
 
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "input_streams_lock_ios")]
+        public static extern void inputStreamsLock(bool lck);
+
         [DllImport("lib_unity_tiny_ios", EntryPoint = "get_touch_info_stream_ios")]
         public static extern unsafe int * getTouchInfoStream(ref int len);
 
         [DllImport("lib_unity_tiny_ios", EntryPoint = "get_native_window_ios")]
         public static extern unsafe void * getNativeWindow();
 
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "reset_ios_input")]
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "reset_input_ios")]
         public static extern void resetStreams();
 
         [DllImport("lib_unity_tiny_ios", EntryPoint = "available_sensor_ios")]

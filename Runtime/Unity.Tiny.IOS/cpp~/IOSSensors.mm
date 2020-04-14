@@ -193,7 +193,7 @@ bool iOSSensors::EnableSensor(iOSSensorType type, bool enable)
                 return false;
         }
     }
-    return false;        
+    return false;
 }
 
 const double* iOSSensors::GetSensorData(iOSSensorType type, int* len)
@@ -207,7 +207,7 @@ const double* iOSSensors::GetSensorData(iOSSensorType type, int* len)
         {
             [m_Condition wait];
         }
-        [m_Condition unlock];    
+        [m_Condition unlock];
     }];
     *len = (int)m_Data[type].size();
     return m_Data[type].data();
@@ -223,6 +223,6 @@ void iOSSensors::ResetSensorsData()
     [m_Condition lock];
     m_SensorsQueueBlocked = false;
     [m_Condition signal];
-    [m_Condition unlock];    
+    [m_Condition unlock];
 }
 

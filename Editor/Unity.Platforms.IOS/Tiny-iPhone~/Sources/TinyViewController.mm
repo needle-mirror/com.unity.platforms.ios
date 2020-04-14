@@ -19,11 +19,14 @@ static void* m_nwh = NULL;
 
 static UIInterfaceOrientationMask m_orientationMask;
 
-static bool appStarted = false;
+static BOOL appStarted = NO;
 
 extern bool waitForManagedDebugger;
 
 @implementation TinyView
+
+@synthesize m_visible;
+@synthesize m_preventRemoveFromSuperview;
 
 + (Class)layerClass
 {
@@ -50,29 +53,29 @@ extern bool waitForManagedDebugger;
     if (nil != self)
     {
         m_nwh = (__bridge void*)self.layer;
-        m_orientationMask = [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone ? UIInterfaceOrientationMaskAllButUpsideDown :  UIInterfaceOrientationMaskAll;
+        m_orientationMask = UIInterfaceOrientationMaskAll;
         // do we need to pass m_device to PlatformData.context ?
         InputInit(self);
     }
+    m_preventRemoveFromSuperview = NO;
+    m_updateWindow = NO;
     return self;
+}
+
+- (void)removeFromSuperview
+{
+    if (!m_preventRemoveFromSuperview)
+    {
+        [super removeFromSuperview];
+    }
+    m_preventRemoveFromSuperview = NO;
+    m_visible = NO;
 }
 
 - (void)layoutSubviews
 {
-    uint32_t frameW = (uint32_t)(self.contentScaleFactor * self.frame.size.width);
-    uint32_t frameH = (uint32_t)(self.contentScaleFactor * self.frame.size.height);
-    uint32_t orientation = 0;
-    if (@available(iOS 13, *))
-    {
-        orientation = (uint32_t)[(UIWindowScene*)[[UIApplication sharedApplication] connectedScenes].allObjects.firstObject interfaceOrientation];
-    }
-    else
-    {
-        orientation = (uint32_t)[[UIApplication sharedApplication] statusBarOrientation];
-    }
-
     CancelTouches();
-    init(m_nwh, frameW, frameH, orientation);
+    m_updateWindow = YES;
 }
 
 - (void)start
@@ -93,11 +96,35 @@ extern bool waitForManagedDebugger;
     }
 }
 
+- (void)updateWindowSize
+{
+    uint32_t frameW = (uint32_t)(self.contentScaleFactor * self.frame.size.width);
+    uint32_t frameH = (uint32_t)(self.contentScaleFactor * self.frame.size.height);
+    uint32_t orientation = 0;
+    if (@available(iOS 13, *))
+    {
+        orientation = (uint32_t)[(UIWindowScene*)[[UIApplication sharedApplication] connectedScenes].allObjects.firstObject interfaceOrientation];
+    }
+    else
+    {
+        orientation = (uint32_t)[[UIApplication sharedApplication] statusBarOrientation];
+    }
+    init(m_nwh, frameW, frameH, orientation);
+}
+
 - (void)renderFrame
 {
+    if (waitForManagedDebugger)
+    {
+        return;
+    }
+    if (m_visible && m_updateWindow)
+    {
+        [self updateWindowSize];
+        m_updateWindow = NO;
+    }
     InputProcess();
-    if (!waitForManagedDebugger)
-        step();
+    step();
 }
 @end
 
@@ -111,13 +138,31 @@ extern bool waitForManagedDebugger;
     [super viewDidLoad];
 }
 
-- (void) viewDidAppear:(BOOL) animated
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    if (self.view != nil && [self.view class] == [TinyView class])
+    {
+        ((TinyView*)self.view).m_visible = NO;
+    }
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    if (self.view != nil && [self.view class] == [TinyView class])
+    {
+        ((TinyView*)self.view).m_visible = YES;
+    }
+}
+
+- (void)viewDidAppear:(BOOL) animated
 {
     [super viewDidAppear:animated];
     if (!appStarted)
     {
         startapp();
-        appStarted = true;
+        appStarted = YES;
     }
 }
 
@@ -166,9 +211,26 @@ extern bool waitForManagedDebugger;
 
 @end
 
-void setOrientationMask(int orientation)
+BOOL portraitUpsideDownAllowed()
 {
+    if (@available(iOS 11, *))
+    {
+        // Portrait upside down is not allowed for iPhones without physical Home button
+        // For such iPhones safe area from the bottom is not 0  
+        return [[UIDevice currentDevice] userInterfaceIdiom] != UIUserInterfaceIdiomPhone ||
+               [[[UIApplication sharedApplication] keyWindow] safeAreaInsets].bottom == 0;
+    }
+    return YES;
+}
+
+bool setOrientationMask(int orientation)
+{
+    if ((UIInterfaceOrientationMask)orientation == UIInterfaceOrientationMaskPortraitUpsideDown && !portraitUpsideDownAllowed())
+    {
+        return false;
+    }
     m_orientationMask = (UIInterfaceOrientationMask)orientation;
+    return true;
 }
 
 

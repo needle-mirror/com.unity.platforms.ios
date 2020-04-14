@@ -21,6 +21,7 @@ namespace Unity.Tiny.iOS
 
         protected override void OnUpdate()
         {
+            iOSNativeCalls.inputStreamsLock(true);
             base.OnUpdate(); // advances input state one frame
             unsafe
             {
@@ -44,6 +45,7 @@ namespace Unity.Tiny.iOS
             }
 
             iOSNativeCalls.resetStreams();
+            iOSNativeCalls.inputStreamsLock(false);
         }
 
         protected override bool IsAvailable(ComponentType type)

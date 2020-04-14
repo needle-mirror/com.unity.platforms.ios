@@ -6,6 +6,7 @@
 #include <math.h>
 #include <time.h>
 #include <vector>
+#include <mutex>
 #include <IOSWrapper.h>
 #include "IOSSensors.h"
 
@@ -18,13 +19,14 @@ static void* nativeWindow = NULL;
 static UIViewController* tinyViewController; 
 // input
 static std::vector<int> touch_info_stream;
+static std::mutex touch_stream_lock;
 // c# delegates
 static bool (*raf)() = 0;
 static void (*pausef)(int) = 0;
 static void (*destroyf)() = 0;
 static void (*device_orientationf)(int) = 0;
 
-void setOrientationMask(int orientationMask);
+bool setOrientationMask(int orientationMask);
 void rotateToDeviceOrientation();
 void rotateToAllowedOrientation();
 void rotateToOrientation(int orientation);
@@ -133,22 +135,37 @@ device_orientationcallbackinit_ios(void (*func)(int)) {
     return true;
 }
 
+DOTS_EXPORT(void)
+input_streams_lock_ios(bool lock)
+{
+    if (lock)
+    {
+        touch_stream_lock.lock();
+    }
+    else
+    {
+        touch_stream_lock.unlock();
+    }
+}
+
 DOTS_EXPORT(const int*)
 get_touch_info_stream_ios(int *len) {
+    if (len == NULL)
+        return NULL;
     *len = (int)touch_info_stream.size();
     return touch_info_stream.data();
+}
+
+DOTS_EXPORT(void)
+reset_input_ios()
+{
+    touch_info_stream.clear();
+    m_iOSSensors.ResetSensorsData();
 }
 
 DOTS_EXPORT(void*)
 get_native_window_ios() {
     return nativeWindow ;
-}
-
-DOTS_EXPORT(void)
-reset_ios_input()
-{
-    touch_info_stream.clear();
-    m_iOSSensors.ResetSensorsData();
 }
 
 DOTS_EXPORT(bool)
@@ -163,6 +180,14 @@ enable_sensor_ios(int type, bool enable)
     return m_iOSSensors.EnableSensor((iOSSensorType)type, enable);
 }
 
+DOTS_EXPORT(const double*)
+get_sensor_stream_ios(int type, int *len)
+{
+    if (len == NULL)
+        return NULL;
+    return m_iOSSensors.GetSensorData((iOSSensorType)type, len);
+}
+
 DOTS_EXPORT(void)
 set_sensor_frequency_ios(int type, int rate)
 {
@@ -175,18 +200,10 @@ get_sensor_frequency_ios(int type)
     return m_iOSSensors.GetSamplingFrequency((iOSSensorType)type);
 }
 
-DOTS_EXPORT(const double*)
-get_sensor_stream_ios(int type, int *len)
-{
-    if (len == NULL)
-        return NULL;
-    return m_iOSSensors.GetSensorData((iOSSensorType)type, len);
-}
-
-DOTS_EXPORT(void)
+DOTS_EXPORT(bool)
 setOrientationMask_ios(int orientationMask)
 {
-    setOrientationMask(orientationMask);
+    return setOrientationMask(orientationMask);
 }
 
 DOTS_EXPORT(void)
@@ -257,6 +274,7 @@ destroyapp()
 DOTS_EXPORT(void)
 touchevent(int id, int action, int xpos, int ypos)
 {
+    std::lock_guard<std::mutex> lock(touch_stream_lock);
     touch_info_stream.push_back((int)id);
     touch_info_stream.push_back((int)action);
     touch_info_stream.push_back((int)xpos);

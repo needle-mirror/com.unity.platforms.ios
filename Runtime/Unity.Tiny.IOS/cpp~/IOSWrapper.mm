@@ -6,6 +6,7 @@
 #include <math.h>
 #include <time.h>
 #include <vector>
+#include <IOSWrapper.h>
 #include "IOSSensors.h"
 
 static bool shouldClose = false;
@@ -14,6 +15,7 @@ static int windowH = 0;
 static int deviceOrientation;
 static int screenOrientation;
 static void* nativeWindow = NULL;
+static UIViewController* tinyViewController; 
 // input
 static std::vector<int> touch_info_stream;
 // c# delegates
@@ -206,6 +208,19 @@ startapp()
     m_iOSSensors.InitializeSensors();
     start();
 }
+
+DOTS_EXPORT(void)
+set_viewcontroller(UIViewController *viewController)
+{
+    tinyViewController = viewController;
+}
+
+DOTS_EXPORT(UIViewController*)
+get_viewcontroller()
+{
+    return tinyViewController;
+}
+
 
 DOTS_EXPORT(void)
 init(void *nwh, int width, int height, int orientation)

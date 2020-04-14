@@ -18,6 +18,7 @@
     
     m_viewController = [[TinyViewController alloc] init];
     m_viewController.view = m_view;
+    set_viewcontroller(m_viewController);
     
     [m_window setRootViewController:m_viewController];
     [m_window makeKeyAndVisible];
@@ -36,6 +37,7 @@
     m_viewController.view = nil;
     m_viewController = [[TinyViewController alloc] init];
     m_viewController.view = m_view;
+    set_viewcontroller(m_viewController);
     
     [UIView transitionWithView:self.m_window duration:0.15 options:UIViewAnimationOptionTransitionNone animations:^{
             [self.m_window setRootViewController:self.m_viewController];

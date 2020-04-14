@@ -2,6 +2,7 @@
 
 extern "C" {
 void init(void *nwh, int width, int height, int orientation);
+void set_viewcontroller(UIViewController* viewController);
 void step(void);
 void pauseapp(int paused);
 void destroyapp(void);

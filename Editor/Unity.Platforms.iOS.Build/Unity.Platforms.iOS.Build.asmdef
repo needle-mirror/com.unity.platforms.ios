@@ -6,8 +6,11 @@
         "Unity.Build.Classic.Private",
         "Unity.Build.Common",
         "Unity.Build.Editor",
+        "UnityEditor.iOS.Extensions.Xcode",
         "Unity.Properties",
-        "Unity.Properties.Editor"
+        "Unity.Properties.Editor",
+        "Unity.Serialization",
+        "Unity.Serialization.Properties"
     ],
     "includePlatforms": [
         "Editor"

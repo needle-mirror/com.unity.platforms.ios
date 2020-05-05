@@ -1,7 +1,7 @@
 {
   "name": "com.unity.platforms.ios",
   "displayName": "Platforms iOS",
-  "version": "0.4.0-preview.3",
+  "version": "0.4.0-preview.4",
   "unity": "2019.3",
   "unityRelease": "0f1",
   "description": "Provides platform and build specific features for the iOS platform.",
@@ -11,14 +11,14 @@
     "ios"
   ],
   "dependencies": {
-    "com.unity.platforms": "0.4.0-preview.3"
+    "com.unity.platforms": "0.4.0-preview.4"
   },
   "upmCi": {
-    "footprint": "132c06bd56f0b4904151588710629c9d24ed27cf"
+    "footprint": "ebdcaefe1849d8c9cecf3418989588c2311bfe98"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/Unity-Technologies/dots-platforms.git",
-    "revision": "f11db1ae120e3d76cfeed2e27d3a7431bee1cb10"
+    "revision": "bd6e34a2beec5b4676d6fe9043518e872484df63"
   }
 }

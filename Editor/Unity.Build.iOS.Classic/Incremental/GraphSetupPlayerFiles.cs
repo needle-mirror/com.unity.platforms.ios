@@ -6,7 +6,7 @@ using Unity.Build;
 using Unity.Build.Classic.Private.IncrementalClassicPipeline;
 using Unity.Build.Common;
 
-namespace Unity.Platforms.iOS.Build
+namespace Unity.Build.iOS.Classic
 {
     sealed class GraphSetupPlayerFiles : BuildStepBase
     {

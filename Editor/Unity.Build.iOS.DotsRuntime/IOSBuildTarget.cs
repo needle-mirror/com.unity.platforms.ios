@@ -1,9 +1,7 @@
-using System;
 using System.IO;
-using System.Text;
-using System.Diagnostics;
+using Unity.Build.DotsRuntime;
 
-namespace Unity.Platforms.iOS
+namespace Unity.Build.iOS.DotsRuntime
 {
     public class iOSBuildTarget : BuildTarget
     {
@@ -16,9 +14,9 @@ namespace Unity.Platforms.iOS
 
         public override bool Run(FileInfo buildTarget)
         {
-			UnityEditor.EditorUtility.RevealInFinder(buildTarget.FullName);
+            UnityEditor.EditorUtility.RevealInFinder(buildTarget.FullName);
             return true;
-		}
+        }
 
         public override ShellProcessOutput RunTestMode(string exeName, string workingDirPath, int timeout)
         {

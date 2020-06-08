@@ -4,14 +4,14 @@ using System.IO;
 using NiceIO;
 using Unity.Build.Classic.Private;
 
-namespace Unity.Platforms.iOS.Build
+namespace Unity.Build.iOS.Classic
 {
     sealed class PramiOSPlugin : PramPlatformPlugin
     {
         public override string[] Providers { get; } = {"appledevice"};
         public override NPath PlatformAssemblyLoadPath
         {
-            get { return Path.GetFullPath("Packages/com.unity.platforms.ios/Editor/Unity.Platforms.iOS.Build/pram~"); }
+            get { return Path.GetFullPath("Packages/com.unity.platforms.ios/Editor/Unity.Build.iOS.Classic/pram~"); }
         }
 
         public override IReadOnlyDictionary<string, string> Environment { get; } = new Dictionary<string, string> ();

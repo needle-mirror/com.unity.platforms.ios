@@ -3,7 +3,7 @@ using Bee.Core;
 using Unity.Build;
 using Unity.Build.Classic.Private.IncrementalClassicPipeline;
 
-namespace Unity.Platforms.iOS.Build
+namespace Unity.Build.iOS.Classic
 {
     sealed class GraphCopyDefaultResources : BuildStepBase
     {

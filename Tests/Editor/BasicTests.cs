@@ -1,11 +1,11 @@
 ﻿using NUnit.Framework;
-using Unity.Platforms.iOS;
+using Unity.Build.iOS.DotsRuntime;
 
 class BasicTests
 {
-	[Test]
-	public void VerifyCanReferenceiOSBuildTarget()
-	{
-		Assert.IsNotNull(typeof(iOSBuildTarget));
-	}
+    [Test]
+    public void VerifyCanReferenceiOSBuildTarget()
+    {
+        Assert.IsNotNull(typeof(iOSBuildTarget));
+    }
 }

@@ -13,7 +13,7 @@ using Unity.BuildSystem.NativeProgramSupport;
 using UnityEditor;
 using Bee.Toolchain.GNU;
 
-namespace Unity.Platforms.iOS.Build
+namespace Unity.Build.iOS.Classic
 {
     class iOSClassicIncrementalBuildPipeline : ClassicIncrementalPipelineBase
     {

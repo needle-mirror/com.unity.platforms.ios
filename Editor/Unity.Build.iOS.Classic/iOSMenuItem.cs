@@ -5,7 +5,7 @@ using Unity.Build.Editor;
 using Unity.BuildSystem.NativeProgramSupport;
 using UnityEditor;
 
-namespace Unity.Platforms.iOS.Build
+namespace Unity.Build.iOS.Classic
 {
     static class iOSMenuItem
     {

@@ -8,7 +8,7 @@ using Unity.Build.Classic.Private.IncrementalClassicPipeline;
 using Unity.BuildSystem.NativeProgramSupport;
 using UnityEditor;
 
-namespace Unity.Platforms.iOS.Build
+namespace Unity.Build.iOS.Classic
 {
     sealed class GraphSetupNativePlugins : BuildStepBase
     {

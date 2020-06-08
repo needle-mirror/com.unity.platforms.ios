@@ -1,16 +1,11 @@
 {
-    "name": "Unity.Platforms.iOS.Build",
+    "name": "Unity.Build.iOS.Classic",
     "references": [
         "Unity.Build",
         "Unity.Build.Classic",
         "Unity.Build.Classic.Private",
-        "Unity.Build.Common",
         "Unity.Build.Editor",
-        "UnityEditor.iOS.Extensions.Xcode",
-        "Unity.Properties",
-        "Unity.Properties.Editor",
-        "Unity.Serialization",
-        "Unity.Serialization.Properties"
+        "UnityEditor.iOS.Extensions.Xcode"
     ],
     "includePlatforms": [
         "Editor"

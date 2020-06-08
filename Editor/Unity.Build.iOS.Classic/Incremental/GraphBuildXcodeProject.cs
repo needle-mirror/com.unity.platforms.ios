@@ -13,7 +13,7 @@ using Unity.Build.Classic.Private.IncrementalClassicPipeline;
 using Unity.Build.Common;
 using Unity.BuildSystem.NativeProgramSupport;
 
-namespace Unity.Platforms.iOS.Build
+namespace Unity.Build.iOS.Classic
 {
     sealed class GraphBuildXcodeProject : BuildStepBase
     {

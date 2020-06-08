@@ -181,7 +181,7 @@ namespace Bee.Toolchain.IOS
                 return mainLibPath;
             }
 
-            var iosPlatformPath = AsmDefConfigFile.AsmDefDescriptionFor("Unity.Platforms.iOS").Path.Parent;
+            var iosPlatformPath = AsmDefConfigFile.AsmDefDescriptionFor("Unity.Build.iOS.DotsRuntime").Path.Parent;
             var xcodeProjectPath = mainLibPath.Parent;
             var xcodeSrcPath = iosPlatformPath.Combine(TinyProjectName+"~");
             var xcodeprojPath = xcodeProjectPath.Combine($"{TinyProjectName}.xcodeproj");

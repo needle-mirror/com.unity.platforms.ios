@@ -19,7 +19,7 @@ using UnityEditor.iOS.Xcode;
 using UnityEditor.iOS.Xcode.Extensions;
 #endif
 
-namespace Unity.Platforms.iOS.Build
+namespace Unity.Build.iOS.Classic
 {
     sealed class GraphGenerateXcodeProject : BuildStepBase
     {

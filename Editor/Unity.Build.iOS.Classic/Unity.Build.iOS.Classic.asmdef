@@ -1,5 +1,5 @@
 {
-    "name": "Unity.Build.iOS.Classic",
+    "name": "Unity.Platforms.iOS.Build",
     "references": [
         "Unity.Build",
         "Unity.Build.Classic",

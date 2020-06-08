@@ -1,23 +1,24 @@
 #if ENABLE_EXPERIMENTAL_INCREMENTAL_PIPELINE
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Bee.Core;
-using NiceIO;
+using Bee.Tools;
 using Unity.Build;
 using Unity.Build.Classic.Private.IncrementalClassicPipeline;
 using Unity.Build.Common;
-using Unity.BuildTools;
 using UnityEngine;
-
 #if UNITY_IOS
+using System.IO;
+using NiceIO;
 using UnityEditor;
 using UnityEditor.iOS;
 using UnityEditor.iOS.Xcode;
 using UnityEditor.iOS.Xcode.Extensions;
 #endif
+
+using UIOrientation = Unity.Build.Common.UIOrientation;
 
 namespace Unity.Build.iOS.Classic
 {
@@ -25,13 +26,13 @@ namespace Unity.Build.iOS.Classic
     {
         static readonly Regex s_ModuleRegex = new Regex(@"(?<=)UnityEngine\.(\S+)Module\.dll(?=)", RegexOptions.Multiline);
 
-        public override Type[] UsedComponents { get; } = { typeof(GeneralSettings) };
+        public override Type[] UsedComponents { get; } = { typeof(GeneralSettings), typeof(ScreenOrientations) };
 
         public override BuildResult Run(BuildContext context)
         {
 #if UNITY_IOS
             var classicContext = context.GetValue<IncrementalClassicSharedData>();
-            var buildDirectory = new NPath(context.GetOutputBuildDirectory());
+            var buildDirectory = new NPath(context.GetOutputBuildDirectory()).MakeAbsolute();
 
             // Gather files from the iOS trampoline that we will use as our base project and copy them to the build directory
             // TODO: only copy the libraries needed. Not libil2cpp, baselib, etc for all variations
@@ -88,15 +89,32 @@ namespace Unity.Build.iOS.Classic
 
             proj.SetBuildProperty(mainTarget, "PRODUCT_NAME", productName);
             proj.SetBuildProperty(mainTarget, "PRODUCT_BUNDLE_IDENTIFIER", companyName + ".${PRODUCT_NAME:rfc1123identifier}");
-            proj.SetBuildProperty(mainTarget, "DEVELOPMENT_TEAM", PlayerSettings.iOS.appleDeveloperTeamID);
-
-            proj.SetBuildProperty(frameworkTarget, "DEVELOPMENT_TEAM", PlayerSettings.iOS.appleDeveloperTeamID);
 
             proj.SetBuildProperty(projectTarget, "PRODUCT_NAME_APP", PlayerSettings.productName);
 
             proj.SetBuildProperty(buildTargets, "ARCHS", "arm64");
             proj.SetBuildProperty(buildTargets, "UNITY_RUNTIME_VERSION", Application.unityVersion);
             proj.SetBuildProperty(buildTargets, "UNITY_SCRIPTING_BACKEND", "il2cpp");
+
+            // If we're running on Yamato override the signing credentials. Otherwise use what the user provided.
+            if (Environment.GetEnvironmentVariable("YAMATO_PROJECT_ID") != null)
+            {
+                proj.SetBuildProperty(mainTarget, "CODE_SIGN_STYLE", "Manual");
+                proj.SetBuildProperty(frameworkTarget, "CODE_SIGN_STYLE", "Manual");
+                var appleTeamID = Environment.GetEnvironmentVariable("APPLE_SIGNING_TEAM_ID");
+                if (appleTeamID != null)
+                {
+                    proj.SetBuildProperty(mainTarget, "DEVELOPMENT_TEAM", appleTeamID);
+                    proj.SetBuildProperty(frameworkTarget, "DEVELOPMENT_TEAM", appleTeamID);
+                }
+                proj.SetBuildProperty(mainTarget, "PROVISIONING_PROFILE_SPECIFIER", "SLO-CI-CERT");
+                proj.SetTargetAttributes("ProvisioningStyle", "Manual");
+            }
+            else
+            {
+                proj.SetBuildProperty(mainTarget, "DEVELOPMENT_TEAM", PlayerSettings.iOS.appleDeveloperTeamID);
+                proj.SetBuildProperty(frameworkTarget, "DEVELOPMENT_TEAM", PlayerSettings.iOS.appleDeveloperTeamID);
+            }
             proj.SetBuildProperty(buildTargets, "CODE_SIGN_IDENTITY[sdk=iphoneos*]", "iPhone Developer");
 
             proj.SetBuildProperty(allProjectTargets, "SDKROOT", "iphoneos");
@@ -260,23 +278,23 @@ void RegisterAllClasses()
             return "";
         }
 
-        static List<string> GetAvailableOrientations()
+        static List<string> GetAvailableOrientations(ScreenOrientations screenOrientations)
         {
             var res = new List<string>();
-            UIOrientation orient = PlayerSettings.defaultInterfaceOrientation;
+            UIOrientation orient = screenOrientations.DefaultOrientation;
 
             bool autorotation = orient == UIOrientation.AutoRotation;
-
-            if (orient == UIOrientation.Portrait || (autorotation && PlayerSettings.allowedAutorotateToPortrait))
+     
+            if (orient == UIOrientation.Portrait || (autorotation && screenOrientations.AllowAutoRotateToPortrait))
                 res.Add("UIInterfaceOrientationPortrait");
 
-            if (orient == UIOrientation.PortraitUpsideDown || (autorotation && PlayerSettings.allowedAutorotateToPortraitUpsideDown))
+            if (orient == UIOrientation.PortraitUpsideDown || (autorotation && screenOrientations.AllowAutoRotateToReversePortrait))
                 res.Add("UIInterfaceOrientationPortraitUpsideDown");
 
-            if (orient == UIOrientation.LandscapeLeft || (autorotation && PlayerSettings.allowedAutorotateToLandscapeLeft))
+            if (orient == UIOrientation.LandscapeLeft || (autorotation && screenOrientations.AllowAutoRotateToLandscape))
                 res.Add("UIInterfaceOrientationLandscapeLeft");
 
-            if (orient == UIOrientation.LandscapeRight || (autorotation && PlayerSettings.allowedAutorotateToLandscapeRight))
+            if (orient == UIOrientation.LandscapeRight || (autorotation && screenOrientations.AllowAutoRotateToReverseLandscape))
                 res.Add("UIInterfaceOrientationLandscapeRight");
 
             return res;
@@ -291,7 +309,7 @@ void RegisterAllClasses()
             data.bundleVersion                  = PlayerSettings.bundleVersion;
             data.buildNumber                    = PlayerSettings.iOS.buildNumber;
             data.bundleDisplayName              = string.IsNullOrEmpty(displayName) ? "${PRODUCT_NAME}" : displayName;
-            data.availableOrientationSet        = GetAvailableOrientations();
+            data.availableOrientationSet        = GetAvailableOrientations(context.GetComponentOrDefault<ScreenOrientations>());
             data.iPhoneLaunchStoryboardName     = "LaunchScreen-iPhone";
             data.iPadLaunchStoryboardName       = "LaunchScreen-iPad";
             data.isIconPrerendered              = PlayerSettings.iOS.prerenderedIcon;

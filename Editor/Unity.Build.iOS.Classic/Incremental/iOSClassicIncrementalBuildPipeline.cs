@@ -1,23 +1,24 @@
 #if ENABLE_EXPERIMENTAL_INCREMENTAL_PIPELINE
 using System;
 using System.Linq;
+using Bee.Core;
+using Bee.NativeProgramSupport;
+using Bee.Toolchain.GNU;
 using Bee.Toolchain.IOS;
+using Bee.Toolchain.Xcode;
 using NiceIO;
 using Unity.Build;
 using Unity.Build.Classic;
 using Unity.Build.Classic.Private;
 using Unity.Build.Classic.Private.IncrementalClassicPipeline;
 using Unity.Build.Common;
-using Bee.Toolchain.Xcode;
-using Unity.BuildSystem.NativeProgramSupport;
 using UnityEditor;
-using Bee.Toolchain.GNU;
 
 namespace Unity.Build.iOS.Classic
 {
     class iOSClassicIncrementalBuildPipeline : ClassicIncrementalPipelineBase
     {
-        public override Platform Platform => new IosPlatform();
+        public override Platform Platform { get; } = new IosPlatform();
         protected override BuildTarget BuildTarget => BuildTarget.iOS;
 
         public override BuildStepCollection BuildSteps { get; } = new[]
@@ -55,7 +56,7 @@ namespace Unity.Build.iOS.Classic
             context.SetValue(new iOSIL2CPPSupport());
 
             var classicContext = context.GetValue<IncrementalClassicSharedData>();
-            var buildDirectory = new NPath(context.GetOutputBuildDirectory());
+            var buildDirectory = new NPath(context.GetOutputBuildDirectory()).MakeAbsolute();
 
             classicContext.DataDeployDirectory = $"{buildDirectory}/Data";
 
@@ -77,6 +78,7 @@ namespace Unity.Build.iOS.Classic
                 new ClassicBuildArchitectureData()
                 {
                     DynamicLibraryDeployDirectory = $"{buildDirectory}/Libraries",
+                    IL2CPPLibraryDirectory = $"{buildDirectory}/Libraries",
                     BurstTarget = "ARMV8A_AARCH64",
                     ToolChain = toolchain,
                     NativeProgramFormat = toolchain.DynamicLibraryFormat

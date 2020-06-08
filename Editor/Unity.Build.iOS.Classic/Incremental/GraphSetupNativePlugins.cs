@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using Unity.Build;
 using Unity.Build.Classic.Private.IncrementalClassicPipeline;
-using Unity.BuildSystem.NativeProgramSupport;
 using UnityEditor;
 
 namespace Unity.Build.iOS.Classic

@@ -6,6 +6,7 @@ using Unity.Build.Classic.Private;
 
 namespace Unity.Build.iOS.Classic
 {
+#if UNITY_IOS
     sealed class PramiOSPlugin : PramPlatformPlugin
     {
         public override string[] Providers { get; } = {"appledevice"};
@@ -16,5 +17,6 @@ namespace Unity.Build.iOS.Classic
 
         public override IReadOnlyDictionary<string, string> Environment { get; } = new Dictionary<string, string> ();
     }
+#endif
 }
 #endif

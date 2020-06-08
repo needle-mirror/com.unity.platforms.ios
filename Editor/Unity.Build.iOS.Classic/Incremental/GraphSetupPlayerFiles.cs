@@ -18,7 +18,7 @@ namespace Unity.Build.iOS.Classic
 
             var appName = new NPath(context.GetComponentOrDefault<GeneralSettings>().ProductName + ".app");
 
-            NPath outputBuildDirectory = new NPath(context.GetOutputBuildDirectory()).MakeAbsolute();
+            NPath outputBuildDirectory = new NPath(context.GetOutputBuildDirectory());
             foreach (var file in playerDirectory.Files(true))
             {
                 if (file.Parent.FileName == "Managed")

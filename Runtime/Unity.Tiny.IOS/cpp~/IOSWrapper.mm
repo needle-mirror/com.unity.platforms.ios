@@ -238,6 +238,11 @@ get_viewcontroller()
     return tinyViewController;
 }
 
+DOTS_EXPORT(UIViewController*)
+GetViewController()
+{
+    return tinyViewController;
+}
 
 DOTS_EXPORT(void)
 init(void *nwh, int width, int height, int orientation)

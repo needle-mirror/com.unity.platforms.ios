@@ -1,3 +1,5 @@
 #import <UIKit/UIKit.h>
 
-extern "C" UIViewController* get_viewcontroller();
+extern "C" UIViewController* get_viewcontroller() __attribute__ ((deprecated));
+
+extern "C" UIViewController* GetViewController();

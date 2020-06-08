@@ -229,6 +229,7 @@ namespace Bee.Toolchain.IOS
 
             // TODO probably it is required to keep previous project since it can be modified by user
             var outputPath = buildPath.Combine($"{m_gameName}");
+            // TODO move is bad, should generate project in-place
             Console.WriteLine($"Move project to {outputPath}");
             Backend.Current.AddAction(
                 actionName: "Open XCode project folder",

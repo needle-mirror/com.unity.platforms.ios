@@ -93,6 +93,28 @@ namespace Bee.Toolchain.IOS
             public static iOSTargetSettings TargetSettings { get; private set; }
             public static ScreenOrientations Orientations { get; private set; }
 
+            public static List<string> GetAvailableOrientationList()
+            {
+                List<string> orientations = new List<string>();
+
+                if (Orientations.DefaultOrientation == UIOrientation.Portrait || 
+                    (Orientations.DefaultOrientation == UIOrientation.AutoRotation && Orientations.AllowAutoRotateToPortrait))
+                    orientations.Add("UIInterfaceOrientationPortrait");
+                if (Orientations.DefaultOrientation == UIOrientation.PortraitUpsideDown || 
+                    (Orientations.DefaultOrientation == UIOrientation.AutoRotation && Orientations.AllowAutoRotateToReversePortrait))
+                    orientations.Add("UIInterfaceOrientationPortraitUpsideDown");
+
+                // we align orientation enum with apple's device orientation, so swap landscape right/left
+                if (Orientations.DefaultOrientation == UIOrientation.LandscapeLeft || 
+                    (Orientations.DefaultOrientation == UIOrientation.AutoRotation && Orientations.AllowAutoRotateToLandscape))
+                    orientations.Add("UIInterfaceOrientationLandscapeRight");
+                if (Orientations.DefaultOrientation == UIOrientation.LandscapeRight || 
+                    (Orientations.DefaultOrientation == UIOrientation.AutoRotation && Orientations.AllowAutoRotateToReverseLandscape))
+                    orientations.Add("UIInterfaceOrientationLandscapeLeft");
+
+                return orientations;
+            }
+
             public static bool Validate()
             {
                 if (Orientations == null ||
@@ -436,6 +458,15 @@ namespace Bee.Toolchain.IOS
             var root = doc.root;
             root.SetString("CFBundleIdentifier", IOSAppToolchain.Config.Identifier.BundleName);
             root.SetString("CFBundleDisplayName", IOSAppToolchain.Config.Settings.ProductName);
+
+            var orient = root.CreateArray("UISupportedInterfaceOrientations");
+            var orient_ipad = root.CreateArray("UISupportedInterfaceOrientations~ipad");
+            foreach (var s in IOSAppToolchain.Config.GetAvailableOrientationList())
+            {
+                orient.AddString(s);
+                orient_ipad.AddString(s);
+            }
+
             return doc.WriteToString();
         }
     }

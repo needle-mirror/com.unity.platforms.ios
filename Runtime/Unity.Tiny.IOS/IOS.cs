@@ -245,7 +245,7 @@ namespace Unity.Tiny.iOS
             Assert.IsTrue(orientation != ScreenOrientation.Unknown, "Orientation mask cannot be 0");
             if (!iOSNativeCalls.set_orientation_mask(ConvertToiOSOrientationMask(orientation)))
             {
-                Console.WriteLine("Orientation mask {orientation} is not allowed for this device");
+                Console.WriteLine($"Orientation mask {(int)orientation} is not allowed for this device or disabled in project settings");
                 return;
             }
             m_screenOrientationMask = orientation;
@@ -280,7 +280,6 @@ namespace Unity.Tiny.iOS
 
         private ScreenOrientation m_deviceOrientation = ScreenOrientation.Unknown;
         private ScreenOrientation m_screenOrientation = ScreenOrientation.Unknown;
-        // TODO probably initialize with the value from build settings
         private ScreenOrientation m_screenOrientationMask = ScreenOrientation.AutoRotation;
 
         private bool m_initialized;

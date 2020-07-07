@@ -18,6 +18,7 @@ static void* m_device = NULL;
 static void* m_nwh = NULL;
 
 static UIInterfaceOrientationMask m_orientationMask;
+extern UIInterfaceOrientationMask m_interfaceOrientationMask;
 
 static BOOL appStarted = NO;
 
@@ -226,6 +227,10 @@ BOOL portraitUpsideDownAllowed()
 bool setOrientationMask(int orientation)
 {
     if ((UIInterfaceOrientationMask)orientation == UIInterfaceOrientationMaskPortraitUpsideDown && !portraitUpsideDownAllowed())
+    {
+        return false;
+    }
+    if ((m_interfaceOrientationMask & orientation) == 0)
     {
         return false;
     }

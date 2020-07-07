@@ -3,6 +3,8 @@
 #import "AppDelegate.h"
 #import "UnityTinyIOS.h"
 
+UIInterfaceOrientationMask m_interfaceOrientationMask;
+
 @implementation AppDelegate
 
 @synthesize m_window;
@@ -29,7 +31,9 @@
     m_tinyPaused = NO;
 
     [self showSplashScreen];
-    
+
+    m_interfaceOrientationMask = [application supportedInterfaceOrientationsForWindow:m_window];
+
     return YES;
 }
 

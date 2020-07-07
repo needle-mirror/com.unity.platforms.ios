@@ -16,6 +16,9 @@ using Unity.BuildSystem.NativeProgramSupport;
 using Unity.BuildTools;
 using UnityEditor.iOS.Xcode.Custom;
 using UnityEditor.iOS.Xcode.Custom.Extensions;
+using Unity.Build.Common;
+using Unity.Build.DotsRuntime;
+using Unity.Build.iOS;
 
 namespace Bee.Toolchain.IOS
 {
@@ -29,14 +32,87 @@ namespace Bee.Toolchain.IOS
         }
     }
 
+    internal class UserIOSSimulatorSdkLocator : IOSSimulatorSdkLocator
+    {
+        public UserIOSSimulatorSdkLocator() : base(Architecture.x64) {}
+
+        public IOSSimulatorSdk UserIOSSdk(NPath path)
+        {
+            return path != null ? DefaultSdkFromXcodeApp(path) : IOSSimulatorSdk.Locatorx64.FindSdkInDownloadsOrSystem(new Version(10, 1));
+        }
+    }
+
     internal class IOSAppToolchain : IOSToolchain
     {
+        private static IOSAppToolchain m_iosAppToolchain;
+
         public static ToolChain GetIOSAppToolchain(bool useStatic)
         {
-            return useStatic ? new IOSStaticLibsAppToolchain() : new IOSAppToolchain();
+            // wrong build configuration
+            if (!Config.Validate())
+            {
+                return new IOSAppToolchain();
+            }
+            if (m_iosAppToolchain != null)
+            {
+                return m_iosAppToolchain;
+            }
+            if (useStatic)
+            {
+                if (Config.TargetSettings.SdkVersion == iOSSdkVersion.DeviceSDK)
+                {
+                    m_iosAppToolchain = new IOSStaticLibsAppToolchain((new UserIOSSdkLocator()).UserIOSSdk(XcodePath));
+                }
+                else
+                {
+                    m_iosAppToolchain = new IOSStaticLibsAppToolchain((new UserIOSSimulatorSdkLocator()).UserIOSSdk(XcodePath));                        
+                }
+            }
+            else
+            {
+                if (Config.TargetSettings.SdkVersion == iOSSdkVersion.DeviceSDK)
+                {
+                    m_iosAppToolchain = new IOSAppToolchain((new UserIOSSdkLocator()).UserIOSSdk(XcodePath));
+                }
+                else
+                {
+                    m_iosAppToolchain = new IOSAppToolchain((new UserIOSSimulatorSdkLocator()).UserIOSSdk(XcodePath));                        
+                }
+            }
+            return m_iosAppToolchain;
         }
 
         public override NativeProgramFormat ExecutableFormat { get; }
+
+        // Build configuration
+        internal class Config
+        {
+            public static GeneralSettings Settings { get; private set; }
+            public static BundleIdentifier Identifier { get; private set; }
+            public static iOSSigningSettings SigningSettings { get; private set; }
+            public static iOSTargetSettings TargetSettings { get; private set; }
+            public static ScreenOrientations Orientations { get; private set; }
+
+            public static bool Validate()
+            {
+                if (Orientations == null ||
+                    (Orientations.DefaultOrientation == UIOrientation.AutoRotation &&
+                    !Orientations.AllowAutoRotateToPortrait &&
+                    !Orientations.AllowAutoRotateToReversePortrait &&
+                    !Orientations.AllowAutoRotateToLandscape &&
+                    !Orientations.AllowAutoRotateToReverseLandscape))
+                {
+                    Console.WriteLine("There are no allowed orientations for the application");
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        static IOSAppToolchain()
+        {
+            BuildConfigurationReader.Read(NPath.CurrentDirectory.Combine("buildconfiguration.json"), typeof(IOSAppToolchain.Config));
+        }
 
         private static NPath _XcodePath = null;
 
@@ -94,7 +170,16 @@ namespace Bee.Toolchain.IOS
             }
         }
 
-        public IOSAppToolchain() : base((new UserIOSSdkLocator()).UserIOSSdk(XcodePath))
+        public IOSAppToolchain() : base((IOSSdk)null)
+        {
+        }
+
+        public IOSAppToolchain(IOSSdk sdk) : base(sdk)
+        {
+            ExecutableFormat = new IOSAppMainModuleFormat(this);
+        }
+
+        public IOSAppToolchain(IOSSimulatorSdk sdk) : base(sdk)
         {
             ExecutableFormat = new IOSAppMainModuleFormat(this);
         }
@@ -104,7 +189,11 @@ namespace Bee.Toolchain.IOS
     {
         public override NativeProgramFormat DynamicLibraryFormat { get; }
 
-        public IOSStaticLibsAppToolchain() : base()
+        public IOSStaticLibsAppToolchain(IOSSdk sdk) : base(sdk)
+        {
+            DynamicLibraryFormat = StaticLibraryFormat;
+        }        
+        public IOSStaticLibsAppToolchain(IOSSimulatorSdk sdk) : base(sdk)
         {
             DynamicLibraryFormat = StaticLibraryFormat;
         }        
@@ -301,37 +390,31 @@ namespace Bee.Toolchain.IOS
                 pbxProject.AddFileToBuild(target, fileGuid);
             }
 
-            pbxProject.SetBuildProperty(targets, "PRODUCT_BUNDLE_IDENTIFIER", $"com.unity.{m_gameName.ToLower()}");
+            pbxProject.SetBuildProperty(targets, "PRODUCT_BUNDLE_IDENTIFIER", IOSAppToolchain.Config.Identifier.BundleName);
             pbxProject.SetBuildProperty(targets, "CODE_SIGN_STYLE", "Automatic");
             pbxProject.SetBuildProperty(targets, "PROVISIONING_PROFILE", "");
+            pbxProject.SetBuildProperty(targets, "ARCHS", IOSAppToolchain.Config.TargetSettings.GetTargetArchitecture());
 
-            /* TODO pass signing config from build settings or from env vars
-            string appleDeveloperTeamID = null;
-            string manualProvisioningProfileName = null;
-            string manualProvisioningProfileUUID = null;
-            string codeSignIdentity = null;
+            pbxProject.SetBuildProperty(targets, "SDKROOT", IOSAppToolchain.Config.TargetSettings.SdkVersion == iOSSdkVersion.DeviceSDK ? "iphoneos" : "iphonesimulator");
+            pbxProject.RemoveBuildProperty(targets, "SUPPORTED_PLATFORMS");
+            pbxProject.AddBuildProperty(targets, "SUPPORTED_PLATFORMS", "iphoneos");
+            if (IOSAppToolchain.Config.TargetSettings.SdkVersion == iOSSdkVersion.SimulatorSDK)
+                pbxProject.AddBuildProperty(targets, "SUPPORTED_PLATFORMS", "iphonesimulator");
+            pbxProject.SetBuildProperty(targets, "TARGETED_DEVICE_FAMILY", IOSAppToolchain.Config.TargetSettings.GetTargetDeviceFamily());
 
-            appleDeveloperTeamID = Environment.GetEnvironmentVariable("TEAM_ID");
-            manualProvisioningProfileName = Environment.GetEnvironmentVariable("UNITY_IOSPROVISIONINGNAME");
-            manualProvisioningProfileUUID = Environment.GetEnvironmentVariable("UNITY_IOSPROVISIONINGUUID");
-            codeSignIdentity = Environment.GetEnvironmentVariable("UNITY_APPLECERTIFICATENAME");
-
-            if (!string.IsNullOrEmpty(appleDeveloperTeamID))
+            pbxProject.SetBuildProperty(targets, "DEVELOPMENT_TEAM", IOSAppToolchain.Config.SigningSettings.SigningTeamID);
+            if (!IOSAppToolchain.Config.SigningSettings.AutomaticallySign)
             {
-                pbxProject.SetBuildProperty(targets, "DEVELOPMENT_TEAM", appleDeveloperTeamID);
-            }
-            if (string.IsNullOrEmpty(manualProvisioningProfileUUID) && string.IsNullOrEmpty(manualProvisioningProfileName))
-            {
-                pbxProject.SetBuildProperty(targets, "CODE_SIGN_STYLE", "Automatic");
-                pbxProject.SetBuildProperty(targets, "PROVISIONING_PROFILE", "Automatic");
+                pbxProject.SetBuildProperty(targets, "PROVISIONING_PROFILE", IOSAppToolchain.Config.SigningSettings.ProfileID);
+                pbxProject.SetBuildProperty(targets, "CODE_SIGN_IDENTITY[sdk=iphoneos*]", IOSAppToolchain.Config.SigningSettings.CodeSignIdentityValue);
+                pbxProject.SetBuildProperty(targets, "CODE_SIGN_STYLE", "Manual");
             }
             else
             {
-                pbxProject.SetBuildProperty(targets, "CODE_SIGN_STYLE", "Manual");
-                pbxProject.SetBuildProperty(targets, "PROVISIONING_PROFILE", !string.IsNullOrEmpty(manualProvisioningProfileUUID) ? manualProvisioningProfileUUID : manualProvisioningProfileName);
-                pbxProject.SetBuildProperty(targets, "CODE_SIGN_IDENTITY[sdk=iphoneos*]", codeSignIdentity == null ? "iPhone Developer" : codeSignIdentity);
+                pbxProject.SetBuildProperty(targets, "CODE_SIGN_STYLE", "Automatic");
+                // set manual profiles to nothing if automatically signing
+                pbxProject.SetBuildProperty(targets, "PROVISIONING_PROFILE", "");
             }
-            */
             return pbxProject.WriteToString();
         }
 
@@ -351,8 +434,8 @@ namespace Bee.Toolchain.IOS
             var doc = new PlistDocument();
             doc.ReadFromString(text);
             var root = doc.root;
-            root.SetString("CFBundleIdentifier", $"com.unity.{m_gameName.ToLower()}");
-            root.SetString("CFBundleDisplayName", m_gameName);
+            root.SetString("CFBundleIdentifier", IOSAppToolchain.Config.Identifier.BundleName);
+            root.SetString("CFBundleDisplayName", IOSAppToolchain.Config.Settings.ProductName);
             return doc.WriteToString();
         }
     }

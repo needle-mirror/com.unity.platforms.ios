@@ -239,7 +239,7 @@ get_viewcontroller()
 }
 
 DOTS_EXPORT(UIViewController*)
-GetViewController()
+Unity_Get_ViewController()
 {
     return tinyViewController;
 }

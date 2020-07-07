@@ -1,8 +1,9 @@
 {
     "name": "Unity.Build.iOS.DotsRuntime",
     "references": [
-        "Unity.Build.DotsRuntime",
-        "Unity.Editor"
+        "Unity.Build",
+        "Unity.Build.iOS",
+        "Unity.Build.DotsRuntime"
     ],
     "includePlatforms": [
         "Editor"

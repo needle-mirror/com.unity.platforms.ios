@@ -2,4 +2,4 @@
 
 extern "C" UIViewController* get_viewcontroller() __attribute__ ((deprecated));
 
-extern "C" UIViewController* GetViewController();
+extern "C" UIViewController* Unity_Get_ViewController();

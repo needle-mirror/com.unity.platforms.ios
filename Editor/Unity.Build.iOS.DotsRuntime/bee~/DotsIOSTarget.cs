@@ -13,5 +13,7 @@ class DotsIOSTarget : DotsBuildSystemTarget
     public override string Identifier => "ios";
 
     public override ToolChain ToolChain => IOSAppToolchain.GetIOSAppToolchain(true);
-    public override bool CanUseBurst => true;
+
+    //TODO should return true once burst supports iOS simulator 
+    public override bool CanUseBurst => ToolChain.Architecture is Arm64Architecture;
 }

@@ -2,16 +2,13 @@
 using Bee.Core;
 using NiceIO;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+using Bee.NativeProgramSupport;
 using Bee.Toolchain.IOS;
 using Bee.Toolchain.Xcode;
 using Unity.Build;
 using Unity.Build.Classic;
 using Unity.Build.Classic.Private.IncrementalClassicPipeline;
 using Unity.Build.Common;
-using Unity.BuildSystem.NativeProgramSupport;
 
 namespace Unity.Build.iOS.Classic
 {
@@ -70,7 +67,7 @@ namespace Unity.Build.iOS.Classic
 
             // We really want burst as a dylib but it doesn't support that right now so...
             // Re-link the static lib as a dynamic lib
-            var burstLib = Configuration.RootArtifactsPath.Combine("bcl", "wholeprogram", "wholeprogram.a");
+            var burstLib = Configuration.RootArtifactsPath.Combine("bcl", "aarch64", "wholeprogram", "wholeprogram.a");
             var nativeProgram = new NativeProgram("lib_burst_generated");
             nativeProgram.Libraries.Add(c =>
                 new StaticLibrary(burstLib));

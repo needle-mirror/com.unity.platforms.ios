@@ -59,7 +59,7 @@ namespace Bee.Toolchain.IOS
             }
             if (useStatic)
             {
-                if (Config.TargetSettings.SdkVersion == iOSSdkVersion.DeviceSDK)
+                if (Config.TargetSettings?.SdkVersion == iOSSdkVersion.DeviceSDK)
                 {
                     m_iosAppToolchain = new IOSStaticLibsAppToolchain((new UserIOSSdkLocator()).UserIOSSdk(XcodePath));
                 }
@@ -70,7 +70,7 @@ namespace Bee.Toolchain.IOS
             }
             else
             {
-                if (Config.TargetSettings.SdkVersion == iOSSdkVersion.DeviceSDK)
+                if (Config.TargetSettings?.SdkVersion == iOSSdkVersion.DeviceSDK)
                 {
                     m_iosAppToolchain = new IOSAppToolchain((new UserIOSSdkLocator()).UserIOSSdk(XcodePath));
                 }
@@ -90,6 +90,7 @@ namespace Bee.Toolchain.IOS
             public static GeneralSettings Settings { get; private set; }
             public static BundleIdentifier Identifier { get; private set; }
             public static iOSSigningSettings SigningSettings { get; private set; }
+            public static iOSExportProject ExportProject { get; private set; }
             public static iOSTargetSettings TargetSettings { get; private set; }
             public static ScreenOrientations Orientations { get; private set; }
 
@@ -130,6 +131,8 @@ namespace Bee.Toolchain.IOS
                 return true;
             }
         }
+
+        public static bool ExportProject => BuildConfiguration.HasComponent<iOSExportProject>();
 
         static IOSAppToolchain()
         {
@@ -192,6 +195,11 @@ namespace Bee.Toolchain.IOS
             }
         }
 
+        public static NPath XcodeBuildPath
+        {
+            get { return XcodePath != null ? XcodePath.Combine("Contents", "Developer", "usr", "bin", "xcodebuild") : null; }
+        }
+
         public IOSAppToolchain() : base((IOSSdk)null)
         {
         }
@@ -223,7 +231,7 @@ namespace Bee.Toolchain.IOS
 
     internal sealed class IOSAppMainModuleFormat : NativeProgramFormat
     {
-        public override string Extension { get; } = "";
+        public override string Extension { get; } = IOSAppToolchain.ExportProject ? "" : "app";
 
         internal IOSAppMainModuleFormat(XcodeToolchain toolchain) : base(
             new IOSAppMainModuleLinker(toolchain).WithBundledStaticLibraryDependencies(true))
@@ -279,12 +287,12 @@ namespace Bee.Toolchain.IOS
 
         public override BuiltNativeProgram DeployTo(NPath targetDirectory, Dictionary<IDeployable, IDeployable> alreadyDeployed = null)
         {
-            var libDirectory = Path.Parent.Combine(TinyProjectName);
+            var libDirectory = IOSAppToolchain.ExportProject ? targetDirectory.Combine(m_gameName) : Path.Parent.Combine(TinyProjectName);
             var result = base.DeployTo(libDirectory, alreadyDeployed);
             return new Executable(PackageApp(targetDirectory, result.Path));
         }
 
-        public NPath PackageApp(NPath buildPath, NPath mainLibPath)
+        private NPath PackageApp(NPath buildPath, NPath mainLibPath)
         {
             if (m_iosAppToolchain == null)
             {
@@ -292,10 +300,57 @@ namespace Bee.Toolchain.IOS
                 return mainLibPath;
             }
 
+            var pbxPath = GenerateXCodeProject(mainLibPath);
+
+            var deployedPath = buildPath.Combine($"{m_gameName}{(IOSAppToolchain.ExportProject ? "" : ".app")}");
+            if (IOSAppToolchain.ExportProject)
+            {
+                Backend.Current.AddAction(
+                    actionName: "Open Xcode project folder",
+                    targetFiles: new[] { deployedPath },
+                    inputs: new[] { pbxPath },
+                    executableStringFor: $"open {deployedPath}",
+                    commandLineArguments: Array.Empty<string>(),
+                    allowUnexpectedOutput: true,
+                    allowUnwrittenOutputFiles: true
+                );
+            }
+            else
+            {
+                var configuration = m_config == DotsConfiguration.Release ? "Release" : "Debug";
+                var xcodeprojPath = pbxPath.Parent;
+                var outputPath = xcodeprojPath.Parent.Combine("app");
+                var target = IOSAppToolchain.Config.TargetSettings.SdkVersion == iOSSdkVersion.DeviceSDK ? "iphoneos" : "iphonesimulator";
+                var appPath = outputPath.Combine("Build", "Products", $"{configuration}-{target}", $"{TinyProjectName}.app");
+                var destination = IOSAppToolchain.Config.TargetSettings.SdkVersion == iOSSdkVersion.DeviceSDK ? "generic/platform=iOS": "platform=iOS Simulator,name=iPhone 11";
+                var xcodeBuildExecutableString = $"{IOSAppToolchain.XcodeBuildPath.InQuotes()} -project {xcodeprojPath.InQuotes()} -configuration {configuration} -derivedDataPath {outputPath.InQuotes()} -destination \"{destination}\" -scheme \"{TinyProjectName}\" -allowProvisioningUpdates";
+                Backend.Current.AddAction(
+                    actionName: "Build Xcode project",
+                    targetFiles: new[] { appPath },
+                    inputs: new[] { pbxPath },
+                    executableStringFor: xcodeBuildExecutableString,
+                    commandLineArguments: Array.Empty<string>(),
+                    allowUnexpectedOutput: true
+                );
+
+                Backend.Current.AddAction(
+                    actionName: "Copy application to output folder",
+                    targetFiles: new[] { deployedPath },
+                    inputs: new[] { appPath },
+                    executableStringFor: $"rm -rf {deployedPath} && cp -R {appPath} {deployedPath}",
+                    commandLineArguments: Array.Empty<string>(),
+                    allowUnexpectedOutput: true
+                );
+            }
+            return deployedPath;
+        }
+
+        private NPath GenerateXCodeProject(NPath mainLibPath)
+        {
+            var outputPath = mainLibPath.Parent;
             var iosPlatformPath = AsmDefConfigFile.AsmDefDescriptionFor("Unity.Build.iOS.DotsRuntime").Path.Parent;
-            var xcodeProjectPath = mainLibPath.Parent;
             var xcodeSrcPath = iosPlatformPath.Combine(TinyProjectName+"~");
-            var xcodeprojPath = xcodeProjectPath.Combine($"{TinyProjectName}.xcodeproj");
+            var xcodeprojPath = outputPath.Combine($"{TinyProjectName}.xcodeproj");
 
             // copy and patch pbxproj file
             var pbxPath = xcodeprojPath.Combine("project.pbxproj");
@@ -312,7 +367,7 @@ namespace Bee.Toolchain.IOS
             Backend.Current.AddDependency(pbxPath, xcschemePath);
 
             // copy and patch Info.plist file
-            var plistPath = xcodeProjectPath.Combine("Sources", "Info.plist");
+            var plistPath = outputPath.Combine("Sources", "Info.plist");
             var plistTemplatePath = xcodeSrcPath.Combine("Sources", "Info.plist");
             result = SetupInfoPlist(plistTemplatePath);
             Backend.Current.AddWriteTextAction(plistPath, result);
@@ -323,7 +378,7 @@ namespace Bee.Toolchain.IOS
             {
                 if (r.Extension != "pbxproj" && r.Extension != "xcscheme" && r.FileName != "Info.plist")
                 {
-                    var destPath = xcodeProjectPath.Combine(r.RelativeTo(xcodeSrcPath));
+                    var destPath = outputPath.Combine(r.RelativeTo(xcodeSrcPath));
                     destPath = CopyTool.Instance().Setup(destPath, r);
                     Backend.Current.AddDependency(pbxPath, destPath);
                 }
@@ -333,25 +388,11 @@ namespace Bee.Toolchain.IOS
             {
                 if (r.Path.FileName == "testconfig.json")
                 {
-                    Backend.Current.AddDependency(pbxPath, CopyTool.Instance().Setup(buildPath.Combine(r.Path.FileName), r.Path));
+                    Backend.Current.AddDependency(pbxPath, CopyTool.Instance().Setup(outputPath.Combine(r.Path.FileName), r.Path)); 
                     break;
                 }
             }
-
-            // TODO probably it is required to keep previous project since it can be modified by user
-            var outputPath = buildPath.Combine($"{m_gameName}");
-            // TODO move is bad, should generate project in-place
-            Console.WriteLine($"Move project to {outputPath}");
-            Backend.Current.AddAction(
-                actionName: "Open XCode project folder",
-                targetFiles: new[] { outputPath },
-                inputs: new[] { pbxPath },
-                executableStringFor: $"rm -rf {outputPath} && mv {xcodeProjectPath} {outputPath} && open {outputPath}",
-                commandLineArguments: Array.Empty<string>(),
-                allowUnexpectedOutput: true
-            );
-
-            return outputPath;
+            return pbxPath;
         }
 
         private void ProcessLibs(BuiltNativeProgram p, HashSet<NPath> xCodeLibs)

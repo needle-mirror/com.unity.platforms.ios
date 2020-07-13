@@ -83,7 +83,7 @@ extern bool waitForManagedDebugger;
 {
     if (nil == m_displayLink)
     {
-        m_displayLink = [self.window.screen displayLinkWithTarget:self selector:@selector(renderFrame)];
+        m_displayLink = [self.window.screen displayLinkWithTarget:self selector:@selector(renderFrame:)];
         [m_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes]; // or NSDefaultRunLoopMode ?
     }
 }

@@ -8,6 +8,7 @@ using Bee.Toolchain.IOS;
 using Bee.Toolchain.Xcode;
 using NiceIO;
 using Unity.Build;
+using Unity.Build.Internals;
 using Unity.Build.Classic;
 using Unity.Build.Classic.Private;
 using Unity.Build.Classic.Private.IncrementalClassicPipeline;

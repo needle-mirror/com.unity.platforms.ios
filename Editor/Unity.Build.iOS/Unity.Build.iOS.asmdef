@@ -2,6 +2,7 @@
     "name": "Unity.Build.iOS",
     "references": [
         "Unity.Build",
+        "Unity.Build.Internals",
         "Unity.Build.Classic",
         "Unity.Build.Classic.Private",
         "Unity.InternalAPIEditorBridge.012",

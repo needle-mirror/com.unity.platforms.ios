@@ -2,6 +2,7 @@
     "name": "Unity.Platforms.iOS.Build",
     "references": [
         "Unity.Build",
+        "Unity.Build.Internals",
         "Unity.Build.Classic",
         "Unity.Build.Classic.Private",
         "Unity.Build.Editor",

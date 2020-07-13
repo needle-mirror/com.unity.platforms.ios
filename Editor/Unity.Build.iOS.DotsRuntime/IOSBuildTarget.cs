@@ -21,14 +21,14 @@ namespace Unity.Build.iOS.DotsRuntime
         public override Type[] UsedComponents { get; } =
         {
             typeof(GeneralSettings),
-            typeof(BundleIdentifier),
+            typeof(ApplicationIdentifier),
             typeof(iOSSigningSettings),
             typeof(iOSExportProject),
             typeof(iOSTargetSettings),
             typeof(ScreenOrientations)
         };
 
-        BundleIdentifier Identifier { get; set; }
+        ApplicationIdentifier Identifier { get; set; }
         iOSTargetSettings TargetSettings { get; set; }
         bool ExportProject { get; set; }
 
@@ -45,7 +45,7 @@ namespace Unity.Build.iOS.DotsRuntime
                 if (!runTargets.Any())
                     throw new Exception("No iOS devices available");
 
-                var applicationId = Identifier?.BundleName;
+                var applicationId = Identifier?.PackageName;
                 foreach (var device in runTargets)
                 {
                     UnityEditor.EditorUtility.DisplayProgressBar("Installing Application", $"Installing {applicationId} to {device.DisplayName}", 0.2f);
@@ -80,7 +80,7 @@ namespace Unity.Build.iOS.DotsRuntime
             var signingSettings = context.GetComponentOrDefault<iOSSigningSettings>();
             signingSettings.UpdateCodeSignIdentityValue();
             context.SetComponent(signingSettings);
-            Identifier = context.GetComponentOrDefault<BundleIdentifier>();
+            Identifier = context.GetComponentOrDefault<ApplicationIdentifier>();
             TargetSettings = context.GetComponentOrDefault<iOSTargetSettings>();
             ExportProject = context.HasComponent<iOSExportProject>();
             base.WriteBuildConfiguration(context, path);

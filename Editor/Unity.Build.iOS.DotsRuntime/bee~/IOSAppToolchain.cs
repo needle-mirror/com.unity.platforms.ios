@@ -48,10 +48,10 @@ namespace Bee.Toolchain.IOS
 
         public static ToolChain GetIOSAppToolchain(bool useStatic)
         {
-            // wrong build configuration
+            // wrong build configuration or non iOS toolchain
             if (!Config.Validate())
             {
-                return new IOSAppToolchain();
+                return new IOSAppToolchain(IOSSdk.LocatorArm64.UserDefaultOrDummy);
             }
             if (m_iosAppToolchain != null)
             {
@@ -88,7 +88,7 @@ namespace Bee.Toolchain.IOS
         internal class Config
         {
             public static GeneralSettings Settings { get; private set; }
-            public static BundleIdentifier Identifier { get; private set; }
+            public static ApplicationIdentifier Identifier { get; private set; }
             public static iOSSigningSettings SigningSettings { get; private set; }
             public static iOSExportProject ExportProject { get; private set; }
             public static iOSTargetSettings TargetSettings { get; private set; }
@@ -118,12 +118,15 @@ namespace Bee.Toolchain.IOS
 
             public static bool Validate()
             {
-                if (Orientations == null ||
-                    (Orientations.DefaultOrientation == UIOrientation.AutoRotation &&
+                if (TargetSettings == null || Orientations == null) // not iOS toolchain
+                {
+                    return false;
+                }
+                if (Orientations.DefaultOrientation == UIOrientation.AutoRotation &&
                     !Orientations.AllowAutoRotateToPortrait &&
                     !Orientations.AllowAutoRotateToReversePortrait &&
                     !Orientations.AllowAutoRotateToLandscape &&
-                    !Orientations.AllowAutoRotateToReverseLandscape))
+                    !Orientations.AllowAutoRotateToReverseLandscape)
                 {
                     Console.WriteLine("There are no allowed orientations for the application");
                     return false;
@@ -198,10 +201,6 @@ namespace Bee.Toolchain.IOS
         public static NPath XcodeBuildPath
         {
             get { return XcodePath != null ? XcodePath.Combine("Contents", "Developer", "usr", "bin", "xcodebuild") : null; }
-        }
-
-        public IOSAppToolchain() : base((IOSSdk)null)
-        {
         }
 
         public IOSAppToolchain(IOSSdk sdk) : base(sdk)
@@ -453,7 +452,7 @@ namespace Bee.Toolchain.IOS
                 pbxProject.AddFileToBuild(target, fileGuid);
             }
 
-            pbxProject.SetBuildProperty(targets, "PRODUCT_BUNDLE_IDENTIFIER", IOSAppToolchain.Config.Identifier.BundleName);
+            pbxProject.SetBuildProperty(targets, "PRODUCT_BUNDLE_IDENTIFIER", IOSAppToolchain.Config.Identifier.PackageName);
             pbxProject.SetBuildProperty(targets, "CODE_SIGN_STYLE", "Automatic");
             pbxProject.SetBuildProperty(targets, "PROVISIONING_PROFILE", "");
             pbxProject.SetBuildProperty(targets, "ARCHS", IOSAppToolchain.Config.TargetSettings.GetTargetArchitecture());
@@ -497,7 +496,7 @@ namespace Bee.Toolchain.IOS
             var doc = new PlistDocument();
             doc.ReadFromString(text);
             var root = doc.root;
-            root.SetString("CFBundleIdentifier", IOSAppToolchain.Config.Identifier.BundleName);
+            root.SetString("CFBundleIdentifier", IOSAppToolchain.Config.Identifier.PackageName);
             root.SetString("CFBundleDisplayName", IOSAppToolchain.Config.Settings.ProductName);
 
             var orient = root.CreateArray("UISupportedInterfaceOrientations");

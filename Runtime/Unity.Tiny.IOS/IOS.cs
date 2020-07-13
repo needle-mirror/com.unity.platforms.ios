@@ -127,8 +127,6 @@ namespace Unity.Tiny.iOS
             env.SetConfigData(config);
             iOSNativeCalls.set_orientation_mask(ConvertToiOSOrientationMask(m_screenOrientationMask));
             iOSNativeCalls.rotate_to_allowed_orientation();
-
-            m_frameTime = iOSNativeCalls.time();
         }
 
         protected override void OnDestroy()
@@ -187,10 +185,6 @@ namespace Unity.Tiny.iOS
                 m_initialized = false;
                 return;
             }
-            double newFrameTime = iOSNativeCalls.time();
-            var timeData = env.StepWallRealtimeFrame(newFrameTime - m_frameTime);
-            World.SetTime(timeData);
-            m_frameTime = newFrameTime;
         }
 
         // taken from iOS SDK (UIDevice.h)
@@ -283,7 +277,6 @@ namespace Unity.Tiny.iOS
         private ScreenOrientation m_screenOrientationMask = ScreenOrientation.AutoRotation;
 
         private bool m_initialized;
-        private double m_frameTime;
     }
 
     public static class iOSNativeCalls
@@ -316,9 +309,6 @@ namespace Unity.Tiny.iOS
         [DllImport("lib_unity_tiny_ios", EntryPoint = "messagePump_ios")]
         [return: MarshalAs(UnmanagedType.I1)]
         public static extern bool messagePump();
-
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "time_ios")]
-        public static extern double time();
 
         [DllImport("lib_unity_tiny_ios", EntryPoint = "pausecallbackinit_ios")]
         public static extern bool set_pause_callback(IntPtr func);

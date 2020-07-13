@@ -133,7 +133,7 @@ namespace Bee.Toolchain.IOS
 
         static IOSAppToolchain()
         {
-            BuildConfigurationReader.Read(NPath.CurrentDirectory.Combine("buildconfiguration.json"), typeof(IOSAppToolchain.Config));
+            BuildConfiguration.Read(NPath.CurrentDirectory.Combine("buildconfiguration.json"), typeof(IOSAppToolchain.Config));
         }
 
         private static NPath _XcodePath = null;

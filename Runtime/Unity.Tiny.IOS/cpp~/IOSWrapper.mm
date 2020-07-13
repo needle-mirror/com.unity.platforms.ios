@@ -21,7 +21,7 @@ static UIViewController* tinyViewController;
 static std::vector<int> touch_info_stream;
 static std::mutex touch_stream_lock;
 // c# delegates
-static bool (*raf)() = 0;
+static bool (*raf)(double) = 0;
 static void (*pausef)(int) = 0;
 static void (*destroyf)() = 0;
 static void (*device_orientationf)(int) = 0;
@@ -102,7 +102,7 @@ time_ios() {
 }
 
 DOTS_EXPORT(bool)
-rafcallbackinit_ios(bool (*func)()) {
+rafcallbackinit_ios(bool (*func)(double)) {
     if (raf)
         return false;
     raf = func;
@@ -255,9 +255,9 @@ init(void *nwh, int width, int height, int orientation)
 }
 
 DOTS_EXPORT(void)
-step()
+step(double timestamp)
 {
-    if (raf && !raf())
+    if (raf && !raf(timestamp))
         shutdown_ios(2);
 }
 

@@ -113,7 +113,7 @@ extern bool waitForManagedDebugger;
     init(m_nwh, frameW, frameH, orientation);
 }
 
-- (void)renderFrame
+- (void)renderFrame:(CADisplayLink *)sender
 {
     if (waitForManagedDebugger)
     {
@@ -124,8 +124,11 @@ extern bool waitForManagedDebugger;
         [self updateWindowSize];
         m_updateWindow = NO;
     }
+
+    //sender.timestamp is in CACurrentMediaTime() 'coordinate space'.
+
     InputProcess();
-    step();
+    step(sender.timestamp);
 }
 @end
 

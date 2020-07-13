@@ -16,7 +16,7 @@ static int windowH = 0;
 static int deviceOrientation;
 static int screenOrientation;
 static void* nativeWindow = NULL;
-static UIViewController* tinyViewController; 
+static UIViewController* tinyViewController;
 // input
 static std::vector<int> touch_info_stream;
 static std::mutex touch_stream_lock;
@@ -294,7 +294,7 @@ deviceOrientationChanged(int orientation)
         device_orientationf(orientation);
 }
 
-#if UNITY_DOTSPLAYER_IL2CPP_WAIT_FOR_MANAGED_DEBUGGER
+#if UNITY_DOTSRUNTIME_IL2CPP_WAIT_FOR_MANAGED_DEBUGGER
 
 typedef void(*BroadcastFunction)();
 void ShowDebuggerAttachDialogImpl(const char* message, BroadcastFunction broadcast);
@@ -310,4 +310,4 @@ ShowDebuggerAttachDialog(const char* message, BroadcastFunction broadcast)
 
 bool waitForManagedDebugger = false;
 
-#endif // UNITY_DOTSPLAYER_IL2CPP_WAIT_FOR_MANAGED_DEBUGGER
+#endif // UNITY_DOTSRUNTIME_IL2CPP_WAIT_FOR_MANAGED_DEBUGGER

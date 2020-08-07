@@ -410,7 +410,18 @@ namespace Bee.Toolchain.IOS
         {
             const string iconsPath = "Sources/Assets.xcassets/AppIcon.appiconset";
             destPath = destPath.Combine(iconsPath, iconName);
-            srcPath = !String.IsNullOrEmpty(configIcon) ? configIcon : srcPath.Combine(iconsPath, iconName);
+            if (String.IsNullOrEmpty(configIcon))
+            {
+                srcPath = srcPath.Combine(iconsPath, iconName);
+            }
+            else
+            {
+                srcPath = new NPath(configIcon);
+                if (srcPath.IsRelative)
+                {
+                    srcPath = (new NPath("../..")).Combine(srcPath);
+                }
+            }
             return CopyTool.Instance().Setup(destPath, srcPath);
         }
 

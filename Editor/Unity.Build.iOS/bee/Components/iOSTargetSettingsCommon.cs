@@ -29,6 +29,7 @@ namespace Unity.Build.iOS
 
     internal sealed partial class iOSTargetSettings
     {
+        [CreateProperty] public System.Version TargetVersion { set; get; } = new System.Version(10, 0);
         [CreateProperty] public iOSSdkVersion SdkVersion { set; get; } = iOSSdkVersion.DeviceSDK;
         [CreateProperty] public iOSTargetDevice TargetDevice { set; get; } = iOSTargetDevice.iPhoneAndiPad;
 

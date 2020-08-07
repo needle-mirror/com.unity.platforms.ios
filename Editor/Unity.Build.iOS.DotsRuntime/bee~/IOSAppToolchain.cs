@@ -89,6 +89,7 @@ namespace Bee.Toolchain.IOS
         {
             public static GeneralSettings Settings { get; private set; }
             public static ApplicationIdentifier Identifier { get; private set; }
+            public static iOSBuildNumber BuildNumber { get; private set; }
             public static iOSSigningSettings SigningSettings { get; private set; }
             public static iOSExportProject ExportProject { get; private set; }
             public static iOSTargetSettings TargetSettings { get; private set; }
@@ -411,7 +412,7 @@ namespace Bee.Toolchain.IOS
             destPath = destPath.Combine(iconsPath, iconName);
             srcPath = !String.IsNullOrEmpty(configIcon) ? configIcon : srcPath.Combine(iconsPath, iconName);
             return CopyTool.Instance().Setup(destPath, srcPath);
-        }    
+        }
 
         private void ProcessLibs(BuiltNativeProgram p, HashSet<NPath> xCodeLibs)
         {
@@ -472,6 +473,7 @@ namespace Bee.Toolchain.IOS
             }
 
             pbxProject.SetBuildProperty(targets, "PRODUCT_BUNDLE_IDENTIFIER", IOSAppToolchain.Config.Identifier.PackageName);
+            pbxProject.SetBuildProperty(targets, "IPHONEOS_DEPLOYMENT_TARGET",IOSAppToolchain.Config.TargetSettings.TargetVersion.ToString(2));
             pbxProject.SetBuildProperty(targets, "CODE_SIGN_STYLE", "Automatic");
             pbxProject.SetBuildProperty(targets, "PROVISIONING_PROFILE", "");
             pbxProject.SetBuildProperty(targets, "ARCHS", IOSAppToolchain.Config.TargetSettings.GetTargetArchitecture());
@@ -517,6 +519,12 @@ namespace Bee.Toolchain.IOS
             var root = doc.root;
             root.SetString("CFBundleIdentifier", IOSAppToolchain.Config.Identifier.PackageName);
             root.SetString("CFBundleDisplayName", IOSAppToolchain.Config.Settings.ProductName);
+            var version = IOSAppToolchain.Config.Settings.Version;
+            var fieldCount = version.Revision > 0 ? 4 : 3;
+            root.SetString("CFBundleShortVersionString", IOSAppToolchain.Config.Settings.Version.ToString(fieldCount));
+            var buildNumber = IOSAppToolchain.Config.BuildNumber.BuildNumber;
+            fieldCount = buildNumber.Build > 0 ? 3 : (buildNumber.Minor > 0 ? 2 : 1);
+            root.SetString("CFBundleVersion", buildNumber.ToString(fieldCount));
 
             var orient = root.CreateArray("UISupportedInterfaceOrientations");
             var orient_ipad = root.CreateArray("UISupportedInterfaceOrientations~ipad");

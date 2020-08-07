@@ -22,6 +22,7 @@ namespace Unity.Build.iOS.DotsRuntime
         {
             typeof(GeneralSettings),
             typeof(ApplicationIdentifier),
+            typeof(iOSBuildNumber),
             typeof(iOSSigningSettings),
             typeof(iOSExportProject),
             typeof(iOSTargetSettings),

@@ -1,7 +1,6 @@
-using Bee.NativeProgramSupport.Building;
 using Bee.Toolchain.IOS;
 using DotsBuildTargets;
-using Unity.BuildSystem.NativeProgramSupport;
+using Bee.NativeProgramSupport;
 
 class DotsIOSTarget : DotsBuildSystemTarget
 {
@@ -15,5 +14,5 @@ class DotsIOSTarget : DotsBuildSystemTarget
     public override ToolChain ToolChain => IOSAppToolchain.GetIOSAppToolchain(true);
 
     //TODO should return true once burst supports iOS simulator 
-    public override bool CanUseBurst => ToolChain.Architecture is Arm64Architecture;
+    public override bool CanUseBurst => ToolChain.Architecture.IsArm64;
 }

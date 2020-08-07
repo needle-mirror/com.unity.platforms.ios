@@ -3,7 +3,6 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
-using Bee.NativeProgramSupport.Building;
 using Bee.Core;
 using Bee.DotNet;
 using Bee.Stevedore;
@@ -12,13 +11,14 @@ using Bee.Toolchain.Extension;
 using Bee.BuildTools;
 using Newtonsoft.Json.Linq;
 using NiceIO;
-using Unity.BuildSystem.NativeProgramSupport;
-using Unity.BuildTools;
 using UnityEditor.iOS.Xcode.Custom;
 using UnityEditor.iOS.Xcode.Custom.Extensions;
 using Unity.Build.Common;
 using Unity.Build.DotsRuntime;
 using Unity.Build.iOS;
+
+using Bee.NativeProgramSupport;
+using Bee.Tools;
 
 namespace Bee.Toolchain.IOS
 {

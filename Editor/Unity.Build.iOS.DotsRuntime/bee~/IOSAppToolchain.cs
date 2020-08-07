@@ -93,6 +93,7 @@ namespace Bee.Toolchain.IOS
             public static iOSExportProject ExportProject { get; private set; }
             public static iOSTargetSettings TargetSettings { get; private set; }
             public static ScreenOrientations Orientations { get; private set; }
+            public static iOSIcons Icons { get; private set; }
 
             public static List<string> GetAvailableOrientationList()
             {
@@ -329,7 +330,8 @@ namespace Bee.Toolchain.IOS
                     inputs: new[] { pbxPath },
                     executableStringFor: xcodeBuildExecutableString,
                     commandLineArguments: Array.Empty<string>(),
-                    allowUnexpectedOutput: true
+                    allowUnexpectedOutput: true,
+                    allowUnwrittenOutputFiles: true
                 );
 
                 Backend.Current.AddAction(
@@ -375,13 +377,22 @@ namespace Bee.Toolchain.IOS
             // copy xcodeproj files
             foreach (var r in xcodeSrcPath.Files(true))
             {
-                if (r.Extension != "pbxproj" && r.Extension != "xcscheme" && r.FileName != "Info.plist")
+                if (r.Extension != "pbxproj" && r.Extension != "xcscheme" && r.FileName != "Info.plist" && !r.HasDirectory("AppIcon.appiconset"))
                 {
                     var destPath = outputPath.Combine(r.RelativeTo(xcodeSrcPath));
                     destPath = CopyTool.Instance().Setup(destPath, r);
                     Backend.Current.AddDependency(pbxPath, destPath);
                 }
             }
+
+            // copy icon files
+            var icons = IOSAppToolchain.Config.Icons;
+            Backend.Current.AddDependency(pbxPath, CopyIcon(xcodeSrcPath, outputPath, "Icon-iPhone-120.png", icons.iPhone2x));
+            Backend.Current.AddDependency(pbxPath, CopyIcon(xcodeSrcPath, outputPath, "Icon-iPhone-180.png", icons.iPhone3x));
+            Backend.Current.AddDependency(pbxPath, CopyIcon(xcodeSrcPath, outputPath, "Icon-iPad-152.png", icons.iPad2x));
+            Backend.Current.AddDependency(pbxPath, CopyIcon(xcodeSrcPath, outputPath, "Icon-iPad-167.png", icons.iPadPro2x));
+            Backend.Current.AddDependency(pbxPath, CopyIcon(xcodeSrcPath, outputPath, "AppStore-1024.png", icons.AppStore));
+            Backend.Current.AddDependency(pbxPath, CopyIcon(xcodeSrcPath, outputPath, "Contents.json", null));
 
             foreach (var r in m_supportFiles)
             {
@@ -393,6 +404,14 @@ namespace Bee.Toolchain.IOS
             }
             return pbxPath;
         }
+
+        private NPath CopyIcon(NPath srcPath, NPath destPath, string iconName, string configIcon)
+        {
+            const string iconsPath = "Sources/Assets.xcassets/AppIcon.appiconset";
+            destPath = destPath.Combine(iconsPath, iconName);
+            srcPath = !String.IsNullOrEmpty(configIcon) ? configIcon : srcPath.Combine(iconsPath, iconName);
+            return CopyTool.Instance().Setup(destPath, srcPath);
+        }    
 
         private void ProcessLibs(BuiltNativeProgram p, HashSet<NPath> xCodeLibs)
         {
@@ -477,7 +496,7 @@ namespace Bee.Toolchain.IOS
                 // set manual profiles to nothing if automatically signing
                 pbxProject.SetBuildProperty(targets, "PROVISIONING_PROFILE", "");
             }
-            return pbxProject.WriteToString();
+            return pbxProject.WriteToString().Replace("**ORGANIZATION**", IOSAppToolchain.Config.Settings.CompanyName);
         }
 
         private string SetupXcScheme(NPath xcSchemePath, bool release)

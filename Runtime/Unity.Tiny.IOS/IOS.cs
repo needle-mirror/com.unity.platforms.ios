@@ -100,8 +100,7 @@ namespace Unity.Tiny.iOS
 
             SetCallbacks();
 
-            var env = World.GetExistingSystem<TinyEnvironment>();
-            var config = env.GetConfigData<DisplayInfo>();
+            var config = GetSingleton<DisplayInfo>();
 
             int winw = 0, winh = 0;
             iOSNativeCalls.getWindowSize(ref winw, ref winh);
@@ -124,7 +123,7 @@ namespace Unity.Tiny.iOS
             iOSNativeCalls.getFramebufferSize(ref fbw, ref fbh);
             config.framebufferWidth = fbw;
             config.framebufferHeight = fbh;
-            env.SetConfigData(config);
+            SetSingleton(config);
             iOSNativeCalls.set_orientation_mask(ConvertToiOSOrientationMask(m_screenOrientationMask));
             iOSNativeCalls.rotate_to_allowed_orientation();
         }
@@ -145,8 +144,7 @@ namespace Unity.Tiny.iOS
             if (!m_initialized)
                 return;
 
-            var env = World.GetExistingSystem<TinyEnvironment>();
-            var config = env.GetConfigData<DisplayInfo>();
+            var config = GetSingleton<DisplayInfo>();
             int winw = 0, winh = 0;
             iOSNativeCalls.getWindowSize(ref winw, ref winh);
             int screenOrientation = 0;
@@ -170,7 +168,7 @@ namespace Unity.Tiny.iOS
                     iOSNativeCalls.getFramebufferSize(ref fbw, ref fbh);
                     config.framebufferWidth = fbw;
                     config.framebufferHeight = fbh;
-                    env.SetConfigData(config);
+                    SetSingleton(config);
                 }
                 else
                 {

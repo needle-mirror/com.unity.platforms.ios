@@ -25,7 +25,8 @@ namespace Unity.Build.iOS.DotsRuntime
             typeof(iOSSigningSettings),
             typeof(iOSExportProject),
             typeof(iOSTargetSettings),
-            typeof(ScreenOrientations)
+            typeof(ScreenOrientations),
+            typeof(iOSIcons)
         };
 
         ApplicationIdentifier Identifier { get; set; }

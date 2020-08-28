@@ -63,7 +63,7 @@ UIInterfaceOrientationMask m_interfaceOrientationMask;
 {
     m_viewController = [[TinyViewController alloc] init];
     [m_viewController setView: m_view];
-    set_viewcontroller(m_viewController);
+    set_viewcontroller_ios(m_viewController);
 }
 
 - (void)startTiny
@@ -107,7 +107,7 @@ UIInterfaceOrientationMask m_interfaceOrientationMask;
     if (m_tinyStarted)
     {
         [m_view stop];
-        pauseapp(1);
+        pauseapp_ios(1);
     }
 }
 
@@ -124,7 +124,7 @@ UIInterfaceOrientationMask m_interfaceOrientationMask;
     m_tinyPaused = NO;
     if (m_tinyStarted)
     {
-        pauseapp(0);
+        pauseapp_ios(0);
         [m_view start];
     }
     else
@@ -138,7 +138,7 @@ UIInterfaceOrientationMask m_interfaceOrientationMask;
 {
     if (m_tinyStarted)
     {
-        destroyapp();
+        destroyapp_ios();
         m_tinyStarted = NO;
     }
 }
@@ -147,11 +147,16 @@ UIInterfaceOrientationMask m_interfaceOrientationMask;
 {
     if (m_tinyStarted)
     {
-        deviceOrientationChanged((uint32_t)[[note object] orientation]);
+        deviceOrientationChanged_ios((uint32_t)[[note object] orientation]);
     }
 }
 
 @end
+
+void setResolution(int width, int height)
+{
+    [((AppDelegate*)[[UIApplication sharedApplication] delegate]).m_view setResolutionWidth: width Height: height];
+}
 
 void rotateToDeviceOrientation()
 {

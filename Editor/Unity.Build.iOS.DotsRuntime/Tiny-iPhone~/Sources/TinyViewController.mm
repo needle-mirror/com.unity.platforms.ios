@@ -79,6 +79,25 @@ extern bool waitForManagedDebugger;
     m_updateWindow = YES;
 }
 
+- (void)setResolutionWidth: (int)width Height:(int)height
+{
+    if ([self.layer isKindOfClass:[CAMetalLayer class]])
+    {
+        CAMetalLayer* layer = (CAMetalLayer*)self.layer;
+        layer.drawableSize = CGSizeMake(width, height);
+    }
+    else // OpenGLES
+    {
+        // TODO: get rid of OpenGLES for iOS when problem with Metal on A7/A8 based devices is fixed
+        int frameW = (int)self.frame.size.width;
+        int frameH = (int)self.frame.size.height;
+        self.layer.contentsScale = MAX((width - 1) / frameW, (height - 1) / frameH) + 1.0f;
+        float rectX = (float)width / frameW / self.layer.contentsScale;
+        float rectY = (float)height / frameH / self.layer.contentsScale;
+        self.layer.contentsRect = CGRectMake(0, 1.0f - rectY, rectX, rectY);
+    }
+}
+
 - (void)start
 {
     if (nil == m_displayLink)
@@ -99,18 +118,21 @@ extern bool waitForManagedDebugger;
 
 - (void)updateWindowSize
 {
-    uint32_t frameW = (uint32_t)(self.contentScaleFactor * self.frame.size.width);
-    uint32_t frameH = (uint32_t)(self.contentScaleFactor * self.frame.size.height);
+    float scale = [[UIScreen mainScreen] scale];
+    uint32_t frameW = (uint32_t)(scale * self.frame.size.width);
+    uint32_t frameH = (uint32_t)(scale * self.frame.size.height);
     uint32_t orientation = 0;
+#ifdef __IPHONE_13_0
     if (@available(iOS 13, *))
     {
         orientation = (uint32_t)[(UIWindowScene*)[[UIApplication sharedApplication] connectedScenes].allObjects.firstObject interfaceOrientation];
     }
     else
+#endif
     {
         orientation = (uint32_t)[[UIApplication sharedApplication] statusBarOrientation];
     }
-    init(m_nwh, frameW, frameH, orientation);
+    init_window_ios(m_nwh, frameW, frameH, orientation);
 }
 
 - (void)renderFrame:(CADisplayLink *)sender
@@ -128,7 +150,7 @@ extern bool waitForManagedDebugger;
     //sender.timestamp is in CACurrentMediaTime() 'coordinate space'.
 
     InputProcess();
-    step(sender.timestamp);
+    step_ios(sender.timestamp);
 }
 @end
 
@@ -165,7 +187,7 @@ extern bool waitForManagedDebugger;
     [super viewDidAppear:animated];
     if (!appStarted)
     {
-        startapp();
+        startapp_ios();
         appStarted = YES;
     }
 }

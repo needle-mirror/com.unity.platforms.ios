@@ -100,30 +100,8 @@ namespace Unity.Tiny.iOS
 
             SetCallbacks();
 
-            var config = GetSingleton<DisplayInfo>();
+            UpdateDisplayInfo(true);
 
-            int winw = 0, winh = 0;
-            iOSNativeCalls.getWindowSize(ref winw, ref winh);
-            int screenOrientation = 0;
-            iOSNativeCalls.getScreenOrientation(ref screenOrientation);
-            m_screenOrientation = ConvertFromiOSOrientation(screenOrientation);
-            config.focused = true;
-            config.visible = true;
-            config.orientation = m_screenOrientation;
-            config.frameWidth = winw;
-            config.frameHeight = winh;
-            int sw = 0, sh = 0;
-            iOSNativeCalls.getScreenSize(ref sw, ref sh);
-            config.screenWidth = sw;
-            config.screenHeight = sh;
-            config.width = winw;
-            config.height = winh;
-            config.screenDpiScale = 1.0f;
-            int fbw = 0, fbh = 0;
-            iOSNativeCalls.getFramebufferSize(ref fbw, ref fbh);
-            config.framebufferWidth = fbw;
-            config.framebufferHeight = fbh;
-            SetSingleton(config);
             iOSNativeCalls.set_orientation_mask(ConvertToiOSOrientationMask(m_screenOrientationMask));
             iOSNativeCalls.rotate_to_allowed_orientation();
         }
@@ -144,37 +122,7 @@ namespace Unity.Tiny.iOS
             if (!m_initialized)
                 return;
 
-            var config = GetSingleton<DisplayInfo>();
-            int winw = 0, winh = 0;
-            iOSNativeCalls.getWindowSize(ref winw, ref winh);
-            int screenOrientation = 0;
-            iOSNativeCalls.getScreenOrientation(ref screenOrientation);
-            m_screenOrientation = ConvertFromiOSOrientation(screenOrientation);
-            if (winw != config.width || winh != config.height || m_screenOrientation != config.orientation)
-            {
-                if (config.autoSizeToFrame)
-                {
-                    Console.WriteLine("IOS Window update size.");
-                    if (m_screenOrientation != config.orientation)
-                    {
-                        PlatformEvents.SendScreenOrientationEvent(this, new ScreenOrientationEvent((int)m_screenOrientation));
-                        config.orientation = m_screenOrientation;
-                    }
-                    config.width = winw;
-                    config.height = winh;
-                    config.frameWidth = winw;
-                    config.frameHeight = winh;
-                    int fbw = 0, fbh = 0;
-                    iOSNativeCalls.getFramebufferSize(ref fbw, ref fbh);
-                    config.framebufferWidth = fbw;
-                    config.framebufferHeight = fbh;
-                    SetSingleton(config);
-                }
-                else
-                {
-                    iOSNativeCalls.resize(config.width, config.height);
-                }
-            }
+            UpdateDisplayInfo(false);
             if (!iOSNativeCalls.messagePump())
             {
                 Console.WriteLine("iOS message pump exit.");
@@ -182,6 +130,50 @@ namespace Unity.Tiny.iOS
                 World.QuitUpdate = true;
                 m_initialized = false;
                 return;
+            }
+        }
+
+        private void UpdateDisplayInfo(bool firstTime)
+        {
+            int screenOrientation = 0;
+            iOSNativeCalls.getScreenOrientation(ref screenOrientation);
+            m_screenOrientation = ConvertFromiOSOrientation(screenOrientation);
+            var config = GetSingleton<DisplayInfo>();
+            if (firstTime)
+            {
+                config.focused = true;
+                config.visible = true;
+                config.screenDpiScale = 1.0f;
+                config.orientation = m_screenOrientation;
+            }
+            int sw = 0, sh = 0;
+            iOSNativeCalls.getScreenSize(ref sw, ref sh);
+            int winw = 0, winh = 0;
+            iOSNativeCalls.getWindowSize(ref winw, ref winh);
+            if (firstTime || m_screenOrientation != config.orientation ||
+                sw != config.screenWidth || sh != config.screenHeight ||
+                winw != config.width || winh != config.height ||
+                config.framebufferWidth != config.width || config.framebufferHeight != config.height)
+            {
+                Console.WriteLine($"iOS Window update, screen size {sw} x {sh}, window size {winw} x {winh}, orientation {(int)m_screenOrientation}");
+                if (config.orientation != m_screenOrientation)
+                {
+                    PlatformEvents.SendScreenOrientationEvent(this, new ScreenOrientationEvent((int)m_screenOrientation));
+                    config.orientation = m_screenOrientation;
+                }
+                config.screenWidth = sw;
+                config.screenHeight = sh;
+                if (config.autoSizeToFrame)
+                {
+                    config.width = sw;
+                    config.height = sh;
+                }
+                iOSNativeCalls.setWindowSize(config.width, config.height);
+                config.frameWidth = config.width;
+                config.frameHeight = config.height;
+                config.framebufferWidth = config.width;
+                config.framebufferHeight = config.height;
+                SetSingleton(config);
             }
         }
 
@@ -286,23 +278,17 @@ namespace Unity.Tiny.iOS
         [DllImport("lib_unity_tiny_ios", EntryPoint = "getWindowSize_ios")]
         public static extern void getWindowSize(ref int w, ref int h);
 
+        [DllImport("lib_unity_tiny_ios", EntryPoint = "setWindowSize_ios")]
+        public static extern bool setWindowSize(int width, int height);
+
         [DllImport("lib_unity_tiny_ios", EntryPoint = "getScreenSize_ios")]
         public static extern void getScreenSize(ref int w, ref int h);
-
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "getFramebufferSize_ios")]
-        public static extern void getFramebufferSize(ref int w, ref int h);
-
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "getWindowFrameSize_ios")]
-        public static extern void getWindowFrameSize(ref int left, ref int top, ref int right, ref int bottom);
 
         [DllImport("lib_unity_tiny_ios", EntryPoint = "getScreenOrientation_ios")]
         public static extern void getScreenOrientation(ref int orientation);
 
         [DllImport("lib_unity_tiny_ios", EntryPoint = "shutdown_ios")]
         public static extern void shutdown(int exitCode);
-
-        [DllImport("lib_unity_tiny_ios", EntryPoint = "resize_ios")]
-        public static extern void resize(int width, int height);
 
         [DllImport("lib_unity_tiny_ios", EntryPoint = "messagePump_ios")]
         [return: MarshalAs(UnmanagedType.I1)]

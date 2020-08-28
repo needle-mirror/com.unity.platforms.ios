@@ -12,6 +12,8 @@
 - (void)start;
 - (void)stop;
 
+- (void)setResolutionWidth: (int)width Height:(int)height;
+
 @end
 
 @interface TinyViewController : UIViewController

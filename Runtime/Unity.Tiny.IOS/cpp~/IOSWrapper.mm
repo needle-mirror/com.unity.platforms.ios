@@ -13,6 +13,8 @@
 static bool shouldClose = false;
 static int windowW = 0;
 static int windowH = 0;
+static int screenW = 0;
+static int screenH = 0;
 static int deviceOrientation;
 static int screenOrientation;
 static void* nativeWindow = NULL;
@@ -26,6 +28,7 @@ static void (*pausef)(int) = 0;
 static void (*destroyf)() = 0;
 static void (*device_orientationf)(int) = 0;
 
+void setResolution(int width, int height);
 bool setOrientationMask(int orientationMask);
 void rotateToDeviceOrientation();
 void rotateToAllowedOrientation();
@@ -44,22 +47,22 @@ getWindowSize_ios(int *width, int *height) {
 }
 
 DOTS_EXPORT(void)
+setWindowSize_ios(int width, int height) {
+    if (windowW != width || windowH != height)
+    {
+        if (screenW != width || screenH != height)
+        {
+            setResolution(width, height);
+        }
+        windowW = width;
+        windowH = height;
+    }
+}
+
+DOTS_EXPORT(void)
 getScreenSize_ios(int *width, int *height) {
-    *width = windowW;
-    *height = windowH;
-}
-
-DOTS_EXPORT(void)
-getFramebufferSize_ios(int *width, int *height) {
-    *width = windowW;
-    *height = windowH;
-}
-
-DOTS_EXPORT(void)
-getWindowFrameSize_ios(int *left, int *top, int *right, int *bottom) {
-    *left = *top = 0;
-    *right = windowW;
-    *bottom = windowH;
+    *width = screenW;
+    *height = screenH;
 }
 
 DOTS_EXPORT(void)
@@ -69,23 +72,12 @@ getScreenOrientation_ios(int *orientation) {
 
 DOTS_EXPORT(void)
 shutdown_ios(int exitCode) {
-    // BS call something to kill app
+    // TODO: call something to kill app
     raf = 0;
-}
-
-DOTS_EXPORT(void)
-resize_ios(int width, int height) {
-    //glfwSetWindowSize(mainWindow, width, height);
-    windowW = width;
-    windowH = height;
 }
 
 DOTS_EXPORT(bool)
 messagePump_ios() {
-    /*if (!mainWindow || shouldClose)
-        return false;
-    glfwMakeContextCurrent(mainWindow);
-    glfwPollEvents();*/
     return !shouldClose;
 }
 
@@ -220,14 +212,14 @@ rotateToAllowedOrientation_ios()
 
 extern "C" void start();
 DOTS_EXPORT(void)
-startapp()
+startapp_ios()
 {
     m_iOSSensors.InitializeSensors();
     start();
 }
 
 DOTS_EXPORT(void)
-set_viewcontroller(UIViewController *viewController)
+set_viewcontroller_ios(UIViewController *viewController)
 {
     tinyViewController = viewController;
 }
@@ -245,31 +237,36 @@ Unity_Get_ViewController()
 }
 
 DOTS_EXPORT(void)
-init(void *nwh, int width, int height, int orientation)
+init_window_ios(void *nwh, int width, int height, int orientation)
 {
     printf("init %d x %d\n", width, height);
-    windowW = width;
-    windowH = height;
+    screenW = width;
+    screenH = height;
+    if (windowW == 0)
+    {
+        windowW = width;
+        windowH = height;
+    }
     screenOrientation = orientation;
     nativeWindow = nwh;
 }
 
 DOTS_EXPORT(void)
-step(double timestamp)
+step_ios(double timestamp)
 {
     if (raf && !raf(timestamp))
         shutdown_ios(2);
 }
 
 DOTS_EXPORT(void)
-pauseapp(int paused)
+pauseapp_ios(int paused)
 {
     if (pausef)
         pausef(paused);
 }
 
 DOTS_EXPORT(void)
-destroyapp()
+destroyapp_ios()
 {
     m_iOSSensors.ShutdownSensors();
     if (destroyf)
@@ -277,17 +274,17 @@ destroyapp()
 }
 
 DOTS_EXPORT(void)
-touchevent(int id, int action, int xpos, int ypos)
+touchevent_ios(int id, int action, int xpos, int ypos)
 {
     std::lock_guard<std::mutex> lock(touch_stream_lock);
     touch_info_stream.push_back((int)id);
     touch_info_stream.push_back((int)action);
-    touch_info_stream.push_back((int)xpos);
-    touch_info_stream.push_back(windowH - 1 - (int)ypos);
+    touch_info_stream.push_back((int)xpos * windowW / screenW);
+    touch_info_stream.push_back(windowH - 1 - (int)ypos * windowH / screenH);
 }
 
 DOTS_EXPORT(void)
-deviceOrientationChanged(int orientation)
+deviceOrientationChanged_ios(int orientation)
 {
     deviceOrientation = orientation;
     if (device_orientationf)

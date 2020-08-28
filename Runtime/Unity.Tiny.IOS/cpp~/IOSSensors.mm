@@ -35,6 +35,7 @@ bool iOSSensors::AvailableSensor(iOSSensorType type)
         case Gravity:
         case LinearAcceleration:
         case Attitude: return m_MotionManager.deviceMotionAvailable;
+        default: return false;
     }
     return false;
 }
@@ -61,6 +62,8 @@ void iOSSensors::SetSamplingFrequency(iOSSensorType type, int rate)
         case Attitude:
             m_MotionManager.deviceMotionUpdateInterval = updateInterval;
             return;
+        default:
+            return;
     }
 }
 
@@ -85,6 +88,8 @@ int iOSSensors::GetSamplingFrequency(iOSSensorType type)
         case LinearAcceleration:
         case Attitude:
             updateInterval = m_MotionManager.deviceMotionUpdateInterval;
+            break;
+        default:
             break;
     }
     if (updateInterval > 0.0f)
@@ -166,6 +171,8 @@ bool iOSSensors::EnableSensor(iOSSensorType type, bool enable)
                 }
                 m_SensorOn[type] = true;
                 return true;
+            default:
+                return false;
         }
     }
     else if (!enable && m_SensorOn[type])
@@ -190,6 +197,8 @@ bool iOSSensors::EnableSensor(iOSSensorType type, bool enable)
                 {
                     [m_MotionManager stopDeviceMotionUpdates];
                 }
+                return false;
+            default:
                 return false;
         }
     }

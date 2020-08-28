@@ -261,7 +261,7 @@ void InputProcess()
             case UITouchPhaseMoved: phase = 2; break;
             case UITouchPhaseCancelled: phase = 3; break;
         }
-        if (phase != -1) touchevent(touch.id, phase, touch.xPos, touch.yPos);
+        if (phase != -1) touchevent_ios(touch.id, phase, touch.xPos, touch.yPos);
     }
 
     ++gEventFrame;

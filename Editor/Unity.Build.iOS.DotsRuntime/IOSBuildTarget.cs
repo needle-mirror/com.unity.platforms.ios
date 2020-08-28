@@ -1,15 +1,17 @@
 using System;
 using System.IO;
 using System.Linq;
-using Unity.Build.Internals;
 using Unity.Build.Common;
 using Unity.Build.DotsRuntime;
-using Unity.Build.iOS;
+using Unity.Build.Internals;
+using UnityEngine;
 
 namespace Unity.Build.iOS.DotsRuntime
 {
     public class iOSBuildTarget : BuildTarget
     {
+        protected static readonly Texture2D s_Icon = LoadIcon("Icons", "BuildSettings.iPhone");
+
         public override bool CanBuild => UnityEngine.Application.platform == UnityEngine.RuntimePlatform.OSXEditor;
         public override bool CanRun => !ExportProject && TargetSettings?.SdkVersion == iOSSdkVersion.DeviceSDK;
         public override string DisplayName => "iOS";
@@ -17,6 +19,7 @@ namespace Unity.Build.iOS.DotsRuntime
         public override string ExecutableExtension => ExportProject ? "" : ".app";
         public override string UnityPlatformName => nameof(UnityEditor.BuildTarget.iOS);
         public override bool UsesIL2CPP => true;
+        public override Texture2D Icon => s_Icon;
 
         public override Type[] UsedComponents { get; } =
         {
@@ -38,11 +41,11 @@ namespace Unity.Build.iOS.DotsRuntime
         {
             try
             {
-                var runTargets = new Pram().Discover(new[] {"appledevice"});
+                var runTargets = new Pram().Discover(new[] { "appledevice" });
 
                 // if any devices were found, only pick first
                 if (runTargets.Any())
-                    runTargets = new[] {runTargets.First()};
+                    runTargets = new[] { runTargets.First() };
 
                 if (!runTargets.Any())
                     throw new Exception("No iOS devices available");

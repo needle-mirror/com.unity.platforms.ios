@@ -44,42 +44,36 @@ namespace Bee.Toolchain.IOS
 
     internal class IOSAppToolchain : IOSToolchain
     {
-        private static IOSAppToolchain m_iosAppToolchain;
-
         public static ToolChain GetIOSAppToolchain(bool useStatic)
         {
             // wrong build configuration or non iOS toolchain
             if (!Config.Validate())
             {
-                return new IOSAppToolchain(IOSSdk.LocatorArm64.UserDefaultOrDummy);
+                return new IOSAppToolchain(IOSSdk.LocatorArm64.UserDefaultOrDummy, "11.0");
             }
-            if (m_iosAppToolchain != null)
-            {
-                return m_iosAppToolchain;
-            }
+            var iOSVersion = Config.TargetSettings.TargetVersion.ToString(2);
             if (useStatic)
             {
                 if (Config.TargetSettings?.SdkVersion == iOSSdkVersion.DeviceSDK)
                 {
-                    m_iosAppToolchain = new IOSStaticLibsAppToolchain((new UserIOSSdkLocator()).UserIOSSdk(XcodePath));
+                    return new IOSStaticLibsAppToolchain((new UserIOSSdkLocator()).UserIOSSdk(XcodePath), iOSVersion);
                 }
                 else
                 {
-                    m_iosAppToolchain = new IOSStaticLibsAppToolchain((new UserIOSSimulatorSdkLocator()).UserIOSSdk(XcodePath));                        
+                    return new IOSStaticLibsAppToolchain((new UserIOSSimulatorSdkLocator()).UserIOSSdk(XcodePath), iOSVersion);                        
                 }
             }
             else
             {
                 if (Config.TargetSettings?.SdkVersion == iOSSdkVersion.DeviceSDK)
                 {
-                    m_iosAppToolchain = new IOSAppToolchain((new UserIOSSdkLocator()).UserIOSSdk(XcodePath));
+                    return new IOSAppToolchain((new UserIOSSdkLocator()).UserIOSSdk(XcodePath), iOSVersion);
                 }
                 else
                 {
-                    m_iosAppToolchain = new IOSAppToolchain((new UserIOSSimulatorSdkLocator()).UserIOSSdk(XcodePath));                        
+                    return new IOSAppToolchain((new UserIOSSimulatorSdkLocator()).UserIOSSdk(XcodePath), iOSVersion);
                 }
             }
-            return m_iosAppToolchain;
         }
 
         public override NativeProgramFormat ExecutableFormat { get; }
@@ -141,7 +135,9 @@ namespace Bee.Toolchain.IOS
 
         static IOSAppToolchain()
         {
-            BuildConfiguration.Read(NPath.CurrentDirectory.Combine("buildconfiguration.json"), typeof(IOSAppToolchain.Config));
+            var buildconfiguration = NPath.CurrentDirectory.Combine("buildconfiguration.json");
+            Backend.Current.RegisterFileInfluencingGraph(buildconfiguration);
+            BuildConfiguration.Read(buildconfiguration, typeof(IOSAppToolchain.Config));
         }
 
         private static NPath _XcodePath = null;
@@ -205,12 +201,12 @@ namespace Bee.Toolchain.IOS
             get { return XcodePath != null ? XcodePath.Combine("Contents", "Developer", "usr", "bin", "xcodebuild") : null; }
         }
 
-        public IOSAppToolchain(IOSSdk sdk) : base(sdk)
+        public IOSAppToolchain(IOSSdk sdk, string minOSVersion) : base(sdk, minOSVersion)
         {
             ExecutableFormat = new IOSAppMainModuleFormat(this);
         }
 
-        public IOSAppToolchain(IOSSimulatorSdk sdk) : base(sdk)
+        public IOSAppToolchain(IOSSimulatorSdk sdk, string minOSVersion) : base(sdk, minOSVersion)
         {
             ExecutableFormat = new IOSAppMainModuleFormat(this);
         }
@@ -220,11 +216,11 @@ namespace Bee.Toolchain.IOS
     {
         public override NativeProgramFormat DynamicLibraryFormat { get; }
 
-        public IOSStaticLibsAppToolchain(IOSSdk sdk) : base(sdk)
+        public IOSStaticLibsAppToolchain(IOSSdk sdk, string minOSVersion) : base(sdk, minOSVersion)
         {
             DynamicLibraryFormat = StaticLibraryFormat;
         }        
-        public IOSStaticLibsAppToolchain(IOSSimulatorSdk sdk) : base(sdk)
+        public IOSStaticLibsAppToolchain(IOSSimulatorSdk sdk, string minOSVersion) : base(sdk, minOSVersion)
         {
             DynamicLibraryFormat = StaticLibraryFormat;
         }        
@@ -261,7 +257,7 @@ namespace Bee.Toolchain.IOS
         {
             var resultingLibs = BundleStaticLibraryDependencies ? allLibraries.Where(a => !a.Static) : allLibraries;
 
-            return (BuiltNativeProgram)new IOSAppMainStaticLibrary(ChangeMainModuleName(destination), Toolchain as IOSAppToolchain, resultingLibs.ToArray());
+            return (BuiltNativeProgram)new IOSAppMainStaticLibrary(ChangeMainModuleName(destination), resultingLibs.ToArray());
         }
     }
 
@@ -269,14 +265,12 @@ namespace Bee.Toolchain.IOS
     {
         private const string TinyProjectName = "Tiny-iPhone";
 
-        private IOSAppToolchain m_iosAppToolchain;
         private String m_gameName;
         private DotsConfiguration m_config;
         private IEnumerable<IDeployable> m_supportFiles;
 
-        public IOSAppMainStaticLibrary(NPath path, IOSAppToolchain toolchain, params PrecompiledLibrary[] libraryDependencies) : base(path, libraryDependencies)
+        public IOSAppMainStaticLibrary(NPath path, params PrecompiledLibrary[] libraryDependencies) : base(path, libraryDependencies)
         {
-            m_iosAppToolchain = toolchain;
         }
 
         public void SetAppPackagingParameters(String gameName, DotsConfiguration config, IEnumerable<IDeployable> supportFiles)
@@ -295,12 +289,6 @@ namespace Bee.Toolchain.IOS
 
         private NPath PackageApp(NPath buildPath, NPath mainLibPath)
         {
-            if (m_iosAppToolchain == null)
-            {
-                Console.WriteLine("Error: not IOS App toolchain");
-                return mainLibPath;
-            }
-
             var pbxPath = GenerateXCodeProject(mainLibPath);
 
             var deployedPath = buildPath.Combine($"{m_gameName}{(IOSAppToolchain.ExportProject ? "" : ".app")}");
@@ -341,7 +329,8 @@ namespace Bee.Toolchain.IOS
                     inputs: new[] { appPath },
                     executableStringFor: $"rm -rf {deployedPath} && cp -R {appPath} {deployedPath}",
                     commandLineArguments: Array.Empty<string>(),
-                    allowUnexpectedOutput: true
+                    allowUnexpectedOutput: true,
+                    allowUnwrittenOutputFiles: true
                 );
             }
             return deployedPath;

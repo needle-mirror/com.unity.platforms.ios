@@ -30,8 +30,19 @@ namespace Unity.Build.iOS.DotsRuntime
             typeof(iOSExportProject),
             typeof(iOSTargetSettings),
             typeof(ScreenOrientations),
-            typeof(iOSIcons)
+            typeof(iOSIcons),
+            typeof(ARKitSettings)
         };
+
+        public override Type[] DefaultComponents { get; } =
+        {
+            typeof(ScreenOrientations),
+            typeof(ApplicationIdentifier),
+            typeof(iOSExportProject),
+        };
+
+        public override bool ShouldCreateBuildTargetByDefault => true;
+        public override string DefaultAssetFileName => "iOS";
 
         ApplicationIdentifier Identifier { get; set; }
         iOSTargetSettings TargetSettings { get; set; }
@@ -69,22 +80,86 @@ namespace Unity.Build.iOS.DotsRuntime
             return true;
         }
 
+        /// <summary>
+        ///     iOS deploy is required in order to install and launch the app in test mode
+        ///     to install it simply run
+        ///     brew install ios-deploy
+        ///     https://github.com/ios-control/ios-deploy
+        /// </summary>
+        private const string iOSDeployFolder = "/usr/local/Cellar/ios-deploy";
+
+        private static string FindIOSDeploy()
+        {
+            var shellArgs = new ShellProcessArguments
+            {
+                Executable = "ls",
+                Arguments = new[]
+                {
+                    iOSDeployFolder
+                },
+                ThrowOnError = false
+            };
+            var output = ShellProcess.Run(shellArgs);
+
+            var versionStr = "0.0.0";
+            if (output.ExitCode == 0)
+            {
+                var versions = output.FullOutput.Split('\n');
+                foreach (var v in versions)
+                {
+                    if (v.Length > 0 && (new System.Version(v)).CompareTo(new System.Version(versionStr)) > 0)
+                    {
+                        versionStr = v;
+                    }
+                }
+            }
+            if (versionStr == "0.0.0")
+            {
+                throw new Exception($"iOS deploy is required in order to install and launch the app, to install it simply run \"brew install ios-deploy\"");
+            }
+            return $"{iOSDeployFolder}/{versionStr}/bin/ios-deploy";
+        }
+
         internal override ShellProcessOutput RunTestMode(string exeName, string workingDirPath, int timeout)
         {
-            //TODO "app-start-attached" is not implemented yet in Pram for Apple devices (ios-deploy can gather application log from device)
-            return new ShellProcessOutput
+            var app = $"{workingDirPath}/{exeName}{ExecutableExtension}";
+            if (!Directory.Exists(app))
             {
-                Succeeded = false,
-                ExitCode = 0,
-                FullOutput = "Test mode is not supported for iOS yet"
-            };
+                throw new Exception($"Couldn't find iOS app at: {app} ");
+            }
+            using (var progress = new BuildProgress("Running the iOS app", "Please wait..."))
+            {
+                var shellArgs = new ShellProcessArguments
+                {
+                    Executable = FindIOSDeploy(),
+                    Arguments = new[]
+                    {
+                        "--noninteractive",
+                        "--debug",
+                        "--uninstall",
+                        "--bundle",
+                        app
+                    },
+                    WorkingDirectory = new DirectoryInfo(workingDirPath)
+                };
+                if (timeout > 0)
+                {
+                    shellArgs.MaxIdleTimeInMilliseconds = timeout;
+                    shellArgs.MaxIdleKillIsAnError = false;
+                }
+
+                return ShellProcess.Run(shellArgs);
+            }
         }
 
         public override void WriteBuildConfiguration(BuildContext context, string path)
         {
-            var signingSettings = context.GetComponentOrDefault<iOSSigningSettings>();
-            signingSettings.UpdateCodeSignIdentityValue();
-            context.SetComponent(signingSettings);
+            if (context.HasComponent<iOSSigningSettings>())
+            {
+                var signingSettings = context.GetComponentOrDefault<iOSSigningSettings>();
+                signingSettings.UpdateCodeSignIdentityValue();
+                context.SetComponent(signingSettings);
+            }
             Identifier = context.GetComponentOrDefault<ApplicationIdentifier>();
             TargetSettings = context.GetComponentOrDefault<iOSTargetSettings>();
             ExportProject = context.HasComponent<iOSExportProject>();

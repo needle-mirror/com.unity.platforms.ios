@@ -2,11 +2,10 @@
     "name": "Unity.Platforms.iOS.Build",
     "references": [
         "Unity.Build",
+        "Unity.Build.Editor",
         "Unity.Build.Internals",
         "Unity.Build.Classic",
-        "Unity.Build.Classic.Private",
-        "Unity.Build.Editor",
-        "UnityEditor.iOS.Extensions.Xcode"
+        "Unity.Build.iOS"
     ],
     "includePlatforms": [
         "Editor"
@@ -14,10 +13,6 @@
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,
-    "precompiledReferences": [
-        "bee.dll",
-        "Bee.Toolchain.IOS.dll"
-    ],
     "autoReferenced": false,
     "defineConstraints": [],
     "versionDefines": [],

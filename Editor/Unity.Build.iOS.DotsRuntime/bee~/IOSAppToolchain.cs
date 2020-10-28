@@ -3,6 +3,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using Bee.Core;
 using Bee.DotNet;
 using Bee.Stevedore;
@@ -77,6 +78,7 @@ namespace Bee.Toolchain.IOS
         }
 
         public override NativeProgramFormat ExecutableFormat { get; }
+        public override CLikeCompiler CppCompiler { get; }
 
         // Build configuration
         internal class Config
@@ -89,6 +91,7 @@ namespace Bee.Toolchain.IOS
             public static iOSTargetSettings TargetSettings { get; private set; }
             public static ScreenOrientations Orientations { get; private set; }
             public static iOSIcons Icons { get; private set; }
+            public static ARKitSettings ARKit { get; private set; }
 
             public static List<string> GetAvailableOrientationList()
             {
@@ -204,11 +207,32 @@ namespace Bee.Toolchain.IOS
         public IOSAppToolchain(IOSSdk sdk, string minOSVersion) : base(sdk, minOSVersion)
         {
             ExecutableFormat = new IOSAppMainModuleFormat(this);
+            CppCompiler = new IOSAppCompiler(ActionName, base.CppCompiler as XcodeClangCompiler);
         }
 
         public IOSAppToolchain(IOSSimulatorSdk sdk, string minOSVersion) : base(sdk, minOSVersion)
         {
             ExecutableFormat = new IOSAppMainModuleFormat(this);
+            CppCompiler = new IOSAppCompiler(ActionName, base.CppCompiler as XcodeClangCompiler);
+        }
+    }
+
+    // overriding XcodeClangCompiler to have possibility to add custom define symbols based on build settings
+    public class IOSAppCompiler : XcodeClangCompiler
+    {
+        public IOSAppCompiler(string actionNameSuffix, XcodeClangCompiler compiler)
+            : base(actionNameSuffix, 
+                   compiler.TargetArchitecture,
+                   compiler.TargetPlatform,
+                   compiler.Sdk,
+                   (compiler.DefaultSettings as XcodeClangCompilerSettings).MinOSVersion,
+                   (compiler.DefaultSettings as XcodeClangCompilerSettings).StandardLibrary,
+                   compiler.SupportsDiagnosticAbsolutePaths)
+        {
+            if (BuildConfiguration.HasComponent<ARKitSettings>() && IOSAppToolchain.Config.ARKit.FaceTrackingSupport)
+            {
+                DefaultSettings = DefaultSettings.WithDefines(new[]{ ARKitSettings.FaceTrackingDefine });
+            }
         }
     }
 
@@ -267,17 +291,16 @@ namespace Bee.Toolchain.IOS
 
         private String m_gameName;
         private DotsConfiguration m_config;
-        private IEnumerable<IDeployable> m_supportFiles;
+        private List<NPath> m_projectFiles = new List<NPath>();
 
         public IOSAppMainStaticLibrary(NPath path, params PrecompiledLibrary[] libraryDependencies) : base(path, libraryDependencies)
         {
         }
 
-        public void SetAppPackagingParameters(String gameName, DotsConfiguration config, IEnumerable<IDeployable> supportFiles)
+        public void SetAppPackagingParameters(String gameName, DotsConfiguration config)
         {
             m_gameName = gameName;
             m_config = config;
-            m_supportFiles = supportFiles;
         }
 
         public override BuiltNativeProgram DeployTo(NPath targetDirectory, Dictionary<IDeployable, IDeployable> alreadyDeployed = null)
@@ -290,6 +313,8 @@ namespace Bee.Toolchain.IOS
         private NPath PackageApp(NPath buildPath, NPath mainLibPath)
         {
             var pbxPath = GenerateXCodeProject(mainLibPath);
+            m_projectFiles.Add(mainLibPath);
+            m_projectFiles.AddRange(Deployables.Select(d => d.Path));
 
             var deployedPath = buildPath.Combine($"{m_gameName}{(IOSAppToolchain.ExportProject ? "" : ".app")}");
             if (IOSAppToolchain.ExportProject)
@@ -297,7 +322,7 @@ namespace Bee.Toolchain.IOS
                 Backend.Current.AddAction(
                     actionName: "Open Xcode project folder",
                     targetFiles: new[] { deployedPath },
-                    inputs: new[] { pbxPath },
+                    inputs: m_projectFiles.ToArray(),
                     executableStringFor: $"open {deployedPath}",
                     commandLineArguments: Array.Empty<string>(),
                     allowUnexpectedOutput: true,
@@ -311,22 +336,51 @@ namespace Bee.Toolchain.IOS
                 var outputPath = xcodeprojPath.Parent.Combine("app");
                 var target = IOSAppToolchain.Config.TargetSettings.SdkVersion == iOSSdkVersion.DeviceSDK ? "iphoneos" : "iphonesimulator";
                 var appPath = outputPath.Combine("Build", "Products", $"{configuration}-{target}", $"{TinyProjectName}.app");
+                var appBinaryPath = appPath.Combine("Tiny-iPhone");
                 var destination = IOSAppToolchain.Config.TargetSettings.SdkVersion == iOSSdkVersion.DeviceSDK ? "generic/platform=iOS": "platform=iOS Simulator,name=iPhone 11";
-                var xcodeBuildExecutableString = $"{IOSAppToolchain.XcodeBuildPath.InQuotes()} -project {xcodeprojPath.InQuotes()} -configuration {configuration} -derivedDataPath {outputPath.InQuotes()} -destination \"{destination}\" -scheme \"{TinyProjectName}\" -allowProvisioningUpdates";
+                var xcodeArguments = new List<string>
+                {
+                   $"-project {xcodeprojPath.InQuotes()}",
+                   $"-configuration {configuration}",
+                   $"-derivedDataPath {outputPath.InQuotes()}",
+                   $"-destination \"{destination}\"",
+                   $"-scheme \"{TinyProjectName}\"",
+                   "-allowProvisioningUpdates"
+                };
+                if (!BuildConfiguration.HasComponent<iOSSigningSettings>())
+                {
+                    var devTeam = Environment.GetEnvironmentVariable("UNITY_TINY_IOS_DEVELOPMENT_TEAM");
+                    if (devTeam != null)
+                    {
+                        xcodeArguments.Add($"DEVELOPMENT_TEAM={devTeam}");
+                    }
+                    var signIdentity = Environment.GetEnvironmentVariable("UNITY_TINY_IOS_SIGN_IDENTITY");
+                    if (signIdentity != null)
+                    {
+                        xcodeArguments.Add($"CODE_SIGN_IDENTITY=\"{signIdentity}\"");
+                    }
+                    var provProfile = Environment.GetEnvironmentVariable("UNITY_TINY_IOS_PROVISIONING_PROFILE");
+                    if (provProfile != null)
+                    {
+                        xcodeArguments.Add($"PROVISIONING_PROFILE_SPECIFIER={provProfile}");
+                    }
+                }
+
                 Backend.Current.AddAction(
                     actionName: "Build Xcode project",
-                    targetFiles: new[] { appPath },
-                    inputs: new[] { pbxPath },
-                    executableStringFor: xcodeBuildExecutableString,
-                    commandLineArguments: Array.Empty<string>(),
+                    targetFiles: new[] { appBinaryPath },
+                    inputs: m_projectFiles.ToArray(),
+                    executableStringFor: IOSAppToolchain.XcodeBuildPath.InQuotes(),
+                    commandLineArguments: xcodeArguments.ToArray(),
                     allowUnexpectedOutput: true,
                     allowUnwrittenOutputFiles: true
                 );
 
+                m_projectFiles.Add(appBinaryPath);
                 Backend.Current.AddAction(
                     actionName: "Copy application to output folder",
                     targetFiles: new[] { deployedPath },
-                    inputs: new[] { appPath },
+                    inputs: m_projectFiles.ToArray(),
                     executableStringFor: $"rm -rf {deployedPath} && cp -R {appPath} {deployedPath}",
                     commandLineArguments: Array.Empty<string>(),
                     allowUnexpectedOutput: true,
@@ -348,21 +402,22 @@ namespace Bee.Toolchain.IOS
             var pbxTemplatePath = xcodeSrcPath.Combine($"{TinyProjectName}.xcodeproj", "project.pbxproj");
             var result = SetupXCodeProject(pbxTemplatePath);
             Backend.Current.AddWriteTextAction(pbxPath, result);
-            Backend.Current.AddDependency(pbxPath, mainLibPath);
+            m_projectFiles.Add(pbxPath);
+            m_projectFiles.Add(mainLibPath);
 
             // copy and patch xcscheme file
             var xcschemePath = xcodeprojPath.Combine("xcshareddata", "xcschemes", "Tiny-iPhone.xcscheme");
             var xcschemeTemplatePath = xcodeSrcPath.Combine($"{TinyProjectName}.xcodeproj", "xcshareddata", "xcschemes", "Tiny-iPhone.xcscheme");
             result = SetupXcScheme(xcschemeTemplatePath, m_config == DotsConfiguration.Release);
             Backend.Current.AddWriteTextAction(xcschemePath, result);
-            Backend.Current.AddDependency(pbxPath, xcschemePath);
+            m_projectFiles.Add(xcschemePath);
 
             // copy and patch Info.plist file
             var plistPath = outputPath.Combine("Sources", "Info.plist");
             var plistTemplatePath = xcodeSrcPath.Combine("Sources", "Info.plist");
             result = SetupInfoPlist(plistTemplatePath);
             Backend.Current.AddWriteTextAction(plistPath, result);
-            Backend.Current.AddDependency(xcschemePath, plistPath);
+            m_projectFiles.Add(plistPath);
 
             // copy xcodeproj files
             foreach (var r in xcodeSrcPath.Files(true))
@@ -371,24 +426,26 @@ namespace Bee.Toolchain.IOS
                 {
                     var destPath = outputPath.Combine(r.RelativeTo(xcodeSrcPath));
                     destPath = CopyTool.Instance().Setup(destPath, r);
-                    Backend.Current.AddDependency(pbxPath, destPath);
+                    m_projectFiles.Add(destPath);
                 }
             }
 
             // copy icon files
             var icons = IOSAppToolchain.Config.Icons;
-            Backend.Current.AddDependency(pbxPath, CopyIcon(xcodeSrcPath, outputPath, "Icon-iPhone-120.png", icons.iPhone2x));
-            Backend.Current.AddDependency(pbxPath, CopyIcon(xcodeSrcPath, outputPath, "Icon-iPhone-180.png", icons.iPhone3x));
-            Backend.Current.AddDependency(pbxPath, CopyIcon(xcodeSrcPath, outputPath, "Icon-iPad-152.png", icons.iPad2x));
-            Backend.Current.AddDependency(pbxPath, CopyIcon(xcodeSrcPath, outputPath, "Icon-iPad-167.png", icons.iPadPro2x));
-            Backend.Current.AddDependency(pbxPath, CopyIcon(xcodeSrcPath, outputPath, "AppStore-1024.png", icons.AppStore));
-            Backend.Current.AddDependency(pbxPath, CopyIcon(xcodeSrcPath, outputPath, "Contents.json", null));
+            CopyIcon(xcodeSrcPath, outputPath, "Icon-iPhone-120.png", icons.iPhone2x);
+            CopyIcon(xcodeSrcPath, outputPath, "Icon-iPhone-180.png", icons.iPhone3x);
+            CopyIcon(xcodeSrcPath, outputPath, "Icon-iPad-152.png", icons.iPad2x);
+            CopyIcon(xcodeSrcPath, outputPath, "Icon-iPad-167.png", icons.iPadPro2x);
+            CopyIcon(xcodeSrcPath, outputPath, "AppStore-1024.png", icons.AppStore);
+            CopyIcon(xcodeSrcPath, outputPath, "Contents.json", null);
 
-            foreach (var r in m_supportFiles)
+            for (int i = 0; i < Deployables.Length; ++i)
             {
-                if (r.Path.FileName == "testconfig.json")
+                var r = Deployables[i];
+                if (r is DeployableFile && r.Path.FileName == "testconfig.json")
                 {
-                    Backend.Current.AddDependency(pbxPath, CopyTool.Instance().Setup(outputPath.Combine(r.Path.FileName), r.Path)); 
+                    var path = CopyTool.Instance().Setup(outputPath.Combine(r.Path.FileName), r.Path);
+                    m_projectFiles.Add(path);
                     break;
                 }
             }
@@ -411,7 +468,9 @@ namespace Bee.Toolchain.IOS
                     srcPath = (new NPath("../..")).Combine(srcPath);
                 }
             }
-            return CopyTool.Instance().Setup(destPath, srcPath);
+            var iconPath = CopyTool.Instance().Setup(destPath, srcPath);
+            m_projectFiles.Add(iconPath);
+            return iconPath;
         }
 
         private void ProcessLibs(BuiltNativeProgram p, HashSet<NPath> xCodeLibs)
@@ -449,20 +508,25 @@ namespace Bee.Toolchain.IOS
                 }
             }
 
+            // processing deployable files
             var dataExists = false;
-            foreach (var r in m_supportFiles)
+            for (int i = 0; i < Deployables.Length; ++i)
             {
-                // skipping all subdirectories
-                // TODO: subdirectories require special processing (see processing Data below)
-                var depth = (r as DeployableFile)?.RelativeDeployPath?.Depth;
-                if ((!depth.HasValue || depth <= 1) && r.Path.FileName != "testconfig.json") // fix this condition somehow
+                var r = Deployables[i];
+                if (r is DeployableFile)
                 {
-                    var fileGuid = pbxProject.AddFile(r.Path.FileName, r.Path.FileName);
-                    pbxProject.AddFileToBuild(target, fileGuid);
-                }
-                else if (r.Path.HasDirectory("Data"))
-                {
-                    dataExists = true;
+                    // skipping all subdirectories
+                    // TODO: subdirectories require special processing (see processing Data below)
+                    var depth = (r as DeployableFile).RelativeDeployPath?.Depth;
+                    if ((!depth.HasValue || depth <= 1) && r.Path.FileName != "testconfig.json") // fix this condition somehow
+                    {
+                        var fileGuid = pbxProject.AddFile(r.Path.FileName, r.Path.FileName);
+                        pbxProject.AddFileToBuild(target, fileGuid);
+                    }
+                    else if (r.Path.HasDirectory("Data"))
+                    {
+                        dataExists = true;
+                    }
                 }
             }
             // adding Data folder
@@ -474,8 +538,6 @@ namespace Bee.Toolchain.IOS
 
             pbxProject.SetBuildProperty(targets, "PRODUCT_BUNDLE_IDENTIFIER", IOSAppToolchain.Config.Identifier.PackageName);
             pbxProject.SetBuildProperty(targets, "IPHONEOS_DEPLOYMENT_TARGET",IOSAppToolchain.Config.TargetSettings.TargetVersion.ToString(2));
-            pbxProject.SetBuildProperty(targets, "CODE_SIGN_STYLE", "Automatic");
-            pbxProject.SetBuildProperty(targets, "PROVISIONING_PROFILE", "");
             pbxProject.SetBuildProperty(targets, "ARCHS", IOSAppToolchain.Config.TargetSettings.GetTargetArchitecture());
 
             pbxProject.SetBuildProperty(targets, "SDKROOT", IOSAppToolchain.Config.TargetSettings.SdkVersion == iOSSdkVersion.DeviceSDK ? "iphoneos" : "iphonesimulator");
@@ -484,9 +546,14 @@ namespace Bee.Toolchain.IOS
             if (IOSAppToolchain.Config.TargetSettings.SdkVersion == iOSSdkVersion.SimulatorSDK)
                 pbxProject.AddBuildProperty(targets, "SUPPORTED_PLATFORMS", "iphonesimulator");
             pbxProject.SetBuildProperty(targets, "TARGETED_DEVICE_FAMILY", IOSAppToolchain.Config.TargetSettings.GetTargetDeviceFamily());
-
             pbxProject.SetBuildProperty(targets, "DEVELOPMENT_TEAM", IOSAppToolchain.Config.SigningSettings.SigningTeamID);
-            if (!IOSAppToolchain.Config.SigningSettings.AutomaticallySign)
+
+            if (!IOSAppToolchain.ExportProject && !BuildConfiguration.HasComponent<iOSSigningSettings>() && 
+                Environment.GetEnvironmentVariable("UNITY_TINY_IOS_PROVISIONING_PROFILE") != null)
+            {
+                pbxProject.SetBuildProperty(targets, "CODE_SIGN_STYLE", "Manual");
+            }
+            else if (!IOSAppToolchain.Config.SigningSettings.AutomaticallySign)
             {
                 pbxProject.SetBuildProperty(targets, "PROVISIONING_PROFILE", IOSAppToolchain.Config.SigningSettings.ProfileID);
                 pbxProject.SetBuildProperty(targets, "CODE_SIGN_IDENTITY[sdk=iphoneos*]", IOSAppToolchain.Config.SigningSettings.CodeSignIdentityValue);
@@ -498,7 +565,7 @@ namespace Bee.Toolchain.IOS
                 // set manual profiles to nothing if automatically signing
                 pbxProject.SetBuildProperty(targets, "PROVISIONING_PROFILE", "");
             }
-            return pbxProject.WriteToString().Replace("**ORGANIZATION**", IOSAppToolchain.Config.Settings.CompanyName);
+            return pbxProject.WriteToString().Replace("**ORGANIZATION**", Regex.Replace(IOSAppToolchain.Config.Settings.CompanyName, "[^A-Za-z0-9]", ""));
         }
 
         private string SetupXcScheme(NPath xcSchemePath, bool release)
@@ -532,6 +599,26 @@ namespace Bee.Toolchain.IOS
             {
                 orient.AddString(s);
                 orient_ipad.AddString(s);
+            }
+
+            if (BuildConfiguration.HasComponent<ARKitSettings>())
+            {
+                root.SetString("NSCameraUsageDescription", "Required for ARKit");
+
+                // Get or create array to manage device capabilities
+                const string capabilitiesKey = "UIRequiredDeviceCapabilities";
+                var capabilities = root.values.TryGetValue(capabilitiesKey, out var capabilitiesValue)
+                    ? capabilitiesValue.AsArray()
+                    : root.CreateArray(capabilitiesKey);
+
+                // Remove any existing "arkit" plist entries
+                const string arkitEntry = "arkit";
+                capabilities.values.RemoveAll(entry => entry.AsString().Equals(arkitEntry));
+                if (IOSAppToolchain.Config.ARKit.Requirement == Requirement.Required)
+                {
+                    // Add "arkit" plist entry
+                    capabilities.AddString(arkitEntry);
+                }
             }
 
             return doc.WriteToString();
